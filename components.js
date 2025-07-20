@@ -131,6 +131,51 @@ class ETFTabsManager extends HTMLElement {
         }
     }
 
+    copyETFToTab(etf, sourceTabId, destinationTabId) {
+        console.log('Copying ETF:', etf.name, 'from', sourceTabId, 'to', destinationTabId);
+        const destinationTab = this.tabs.find(t => t.id === destinationTabId);
+        if (!destinationTab) {
+            console.error('Destination tab not found:', destinationTabId);
+            return false;
+        }
+        
+        // Create a deep copy of the ETF
+        const etfCopy = {
+            name: etf.name,
+            totalValue: etf.totalValue,
+            displayValue: etf.displayValue,
+            myInvestment: etf.myInvestment,
+            holdings: etf.holdings.map(holding => ({...holding}))
+        };
+        
+        // Check if ETF with same name already exists in destination tab
+        const existingIndex = destinationTab.etfs.findIndex(e => e.name === etfCopy.name);
+        if (existingIndex !== -1) {
+            // Replace existing ETF
+            destinationTab.etfs[existingIndex] = etfCopy;
+        } else {
+            // Add new ETF
+            destinationTab.etfs.push(etfCopy);
+        }
+        
+        this.saveTabs();
+        
+        // Trigger re-render of destination tab if it's not current
+        const destinationInputSection = this.querySelector(`etf-input-section[data-tab-id="${destinationTabId}"]`);
+        const destinationComparisonView = this.querySelector(`etf-comparison-view[data-tab-id="${destinationTabId}"]`);
+        
+        if (destinationInputSection) {
+            destinationInputSection.etfs = destinationTab.etfs;
+            destinationInputSection.render();
+        }
+        if (destinationComparisonView) {
+            destinationComparisonView.etfs = destinationTab.etfs;
+            destinationComparisonView.render();
+        }
+        
+        return true;
+    }
+
     exportData() {
         const exportData = {
             version: "1.0",
@@ -510,6 +555,8 @@ class ETFComparisonView extends HTMLElement {
                 ${this.renderHoldingsComparison(overlaps)}
             </div>
         `;
+        
+        this.setupCopyButtons();
     }
 
     calculateOverlaps() {
@@ -540,6 +587,101 @@ class ETFComparisonView extends HTMLElement {
         };
 
         return { overlapping, tickerToETFs, stats };
+    }
+    
+    setupCopyButtons() {
+        this.querySelectorAll('.copy-etf-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                const etf = this.etfs[etfIndex];
+                this.showCopyModal(etf);
+            });
+        });
+    }
+    
+    showCopyModal(etf) {
+        const tabsManager = document.querySelector('etf-tabs-manager');
+        if (!tabsManager) return;
+        
+        const otherTabs = tabsManager.tabs.filter(tab => tab.id !== this.tabId);
+        
+        if (otherTabs.length === 0) {
+            alert('No other tabs available. Create a new tab first.');
+            return;
+        }
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'copy-modal';
+        modal.innerHTML = `
+            <div class="copy-modal-content">
+                <h3>Copy "${etf.name}" to another tab</h3>
+                <div class="tab-list">
+                    ${otherTabs.map(tab => `
+                        <button class="tab-option" data-tab-id="${tab.id}">
+                            ${tab.name}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="modal-buttons">
+                    <button class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        // Style the modal
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        const content = modal.querySelector('.copy-modal-content');
+        content.style.cssText = `
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+        `;
+        
+        // Event listeners
+        modal.querySelector('.cancel-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        modal.querySelectorAll('.tab-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const destinationTabId = e.target.getAttribute('data-tab-id');
+                const success = tabsManager.copyETFToTab(etf, this.tabId, destinationTabId);
+                
+                if (success) {
+                    const destinationTab = tabsManager.tabs.find(t => t.id === destinationTabId);
+                    alert(`ETF "${etf.name}" copied to "${destinationTab.name}"`);
+                } else {
+                    alert('Failed to copy ETF');
+                }
+                
+                document.body.removeChild(modal);
+            });
+        });
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+        
+        document.body.appendChild(modal);
     }
 
     renderOverlapStats(overlaps) {
@@ -580,7 +722,10 @@ class ETFComparisonView extends HTMLElement {
             <div class="holdings-grid">
                 ${this.etfs.map((etf, etfIndex) => `
                     <div class="etf-column">
-                        <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                        <div class="etf-header">
+                            <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                            <button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>
+                        </div>
                         ${sortedTickers.map(ticker => {
                             const holding = etf.holdings.find(h => h.ticker === ticker);
                             const isOverlap = overlaps.tickerToETFs && overlaps.tickerToETFs[ticker] && overlaps.tickerToETFs[ticker].length > 1;

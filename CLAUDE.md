@@ -1,8 +1,37 @@
-# CLAUDE.md - Development Context for ETF Holdings Comparison Tool
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
 This is a browser-based ETF (Exchange-Traded Fund) holdings comparison tool built with vanilla JavaScript and Web Components. The application allows users to paste ETF holdings data, map columns, and compare multiple ETFs side-by-side to analyze overlaps and personal investment allocations.
+
+## Development Commands
+
+### Running the Application
+```bash
+# Serve locally with Python (recommended for development)
+python3 -m http.server 8000
+
+# Or with Node.js if available
+npx http-server
+
+# Or simply open in browser (may have CORS limitations)
+open index.html
+```
+
+### Testing
+```bash
+# No formal test runner - testing is manual via browser
+# Open browser developer tools and test with various data formats
+# Primary testing is done through the manual checklist in this file
+```
+
+### Code Quality
+```bash
+# No formal linting - uses vanilla JavaScript
+# Follow existing code style patterns in components.js and utils.js
+```
 
 ## Architecture & Technology Stack
 
@@ -18,37 +47,62 @@ This is a browser-based ETF (Exchange-Traded Fund) holdings comparison tool buil
 - **Responsive Design**: Mobile-first approach with CSS Grid
 - **Accessibility**: Semantic HTML, proper ARIA labels, keyboard navigation
 
-## File Structure & Responsibilities
+## Core Architecture Patterns
 
+### Three-Component System
+The application is built around three main Web Components that communicate via custom events:
+
+1. **ETFTabsManager** (`components.js:1-150`) - Root component managing tab state and persistence
+2. **ETFInputSection** (`components.js:151-350`) - Handles data entry and column mapping
+3. **ETFComparisonView** (`components.js:351-end`) - Renders comparison tables and overlap analysis
+
+### State Management Flow
 ```
-etf-compare/
-├── index.html      # Application shell, component registration
-├── styles.css          # Complete styling system with CSS custom properties
-├── components.js       # Three main web components
-├── utils.js           # Utility functions and app initialization
-├── README.md          # User documentation
-└── CLAUDE.md          # This development context file
+ETFTabsManager (localStorage) 
+    ↓ custom events
+ETFInputSection (data parsing)
+    ↓ etf-added event  
+ETFComparisonView (rendering)
 ```
 
-### Component Breakdown
+### Component Communication
+- Components communicate via bubbling custom events (`etf-added`, `etf-removed`)
+- ETFTabsManager acts as the single source of truth for all tab/ETF data
+- Each component re-renders completely when data changes (no virtual DOM)
 
-#### ETFTabsManager
-- **Purpose**: Manages multiple comparison sets through a tab interface
-- **Key Features**: Tab creation/deletion, import/export, data persistence
-- **Data Structure**: Array of tab objects, each containing ETF arrays
-- **State Management**: Handles active tab switching and tab naming
+### Critical Implementation Details
 
-#### ETFInputSection  
-- **Purpose**: ETF data entry, column mapping, and processing
-- **Key Features**: Smart column detection, data validation, format parsing
-- **Data Processing**: Regex-based parsing for various data formats
-- **User Flow**: Name → Values → Data paste → Column mapping → Processing
+#### Data Parsing Architecture (`components.js:ETFInputSection`)
+The column detection system uses regex patterns to automatically identify:
+- **Ticker columns**: `/^[A-Z]{1,5}$/` for stock symbols
+- **Percentage columns**: `/%/` and numeric validation
+- **Description columns**: Text fields for company names
 
-#### ETFComparisonView
-- **Purpose**: Side-by-side ETF comparison with overlap analysis
-- **Key Features**: Alphabetical sorting, overlap highlighting, statistics
-- **Calculations**: Percentage-based personal position calculations
-- **Visual Design**: Grid layout with responsive columns
+Data parsing handles multiple formats via `detectColumns()` method that analyzes first 5 rows to determine structure.
+
+#### LocalStorage Schema
+```javascript
+// Tab structure in localStorage['etf-tabs']
+{
+  id: "tab123456789",     // timestamp-based unique ID
+  name: "Tech ETFs",      // user-editable name
+  etfs: [ETFObject...]    // array of ETF data
+}
+
+// ETF structure within each tab
+{
+  name: "CIBR",
+  totalValue: 2000000000,
+  displayValue: "$2B",    // formatted display
+  myInvestment: 5000,
+  holdings: [{ticker, amount, description}...]
+}
+```
+
+#### Theme System (`utils.js`)
+- CSS custom properties in `styles.css` define all theme variables
+- `toggleTheme()` function switches `data-theme` attribute on `<body>`
+- Theme preference persisted in `localStorage['theme']`
 
 ## Data Model
 
