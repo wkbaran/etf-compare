@@ -44,6 +44,7 @@ function migrateOldData() {
 function setupGlobalControls() {
     const exportBtn = document.querySelector('#global-export-btn');
     const importFile = document.querySelector('#global-import-file');
+    const wipeBtn = document.querySelector('#global-wipe-btn');
     const tabsManager = document.querySelector('etf-tabs-manager');
 
     if (exportBtn && tabsManager) {
@@ -55,6 +56,12 @@ function setupGlobalControls() {
     if (importFile && tabsManager) {
         importFile.addEventListener('change', (e) => {
             tabsManager.importData(e);
+        });
+    }
+
+    if (wipeBtn && tabsManager) {
+        wipeBtn.addEventListener('click', () => {
+            tabsManager.wipeAllData();
         });
     }
 }

@@ -272,6 +272,45 @@ class ETFTabsManager extends HTMLElement {
             }, 3000);
         }
     }
+
+    wipeAllData() {
+        const confirmMessage = 'This will permanently delete ALL your ETF data and tabs. This action cannot be undone.\n\nAre you sure you want to continue?';
+        
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        // Second confirmation for extra safety
+        const secondConfirm = 'FINAL WARNING: This will delete everything. Type "DELETE" to confirm:';
+        const userInput = prompt(secondConfirm);
+        
+        if (userInput !== 'DELETE') {
+            this.showImportStatus('Data wipe cancelled', false);
+            return;
+        }
+
+        try {
+            // Clear localStorage
+            localStorage.removeItem('etf-tabs');
+            localStorage.removeItem('etf-data'); // Legacy data key
+            
+            // Reset to default state
+            this.tabs = [{ id: 'tab1', name: 'Comparison 1', etfs: [] }];
+            this.activeTabId = 'tab1';
+            
+            // Save the reset state
+            this.saveTabs();
+            
+            // Re-render everything
+            this.render();
+            
+            this.showImportStatus('All data has been wiped successfully', false);
+            
+        } catch (error) {
+            console.error('Error wiping data:', error);
+            this.showImportStatus('Error wiping data: ' + error.message, true);
+        }
+    }
 }
 
 class ETFInputSection extends HTMLElement {
