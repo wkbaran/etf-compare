@@ -16,14 +16,13 @@ This is a browser-based ETF (Exchange-Traded Fund) holdings comparison tool buil
 - **No Framework Dependencies**: Built with pure web standards
 - **Component-Based**: Modular web components for reusability
 - **Responsive Design**: Mobile-first approach with CSS Grid
-- **Progressive Enhancement**: Works without JavaScript for basic functionality
 - **Accessibility**: Semantic HTML, proper ARIA labels, keyboard navigation
 
 ## File Structure & Responsibilities
 
 ```
 etf-compare/
-├── index-new.html      # Application shell, component registration
+├── index.html      # Application shell, component registration
 ├── styles.css          # Complete styling system with CSS custom properties
 ├── components.js       # Three main web components
 ├── utils.js           # Utility functions and app initialization
