@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETF Holdings Comparison Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <div class="header-left"></div>
+            <div class="header-center">ETF Holdings Comparison Tool</div>
+            <div class="header-right">
+                <button class="icon-button" id="global-export-btn" title="Export Data">📄</button>
+                <div class="file-input-wrapper">
+                    <input type="file" id="global-import-file" accept=".json">
+                    <label for="global-import-file" class="icon-button" title="Import Data">📁</label>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+            </div>
+        </h1>
+        <div id="global-import-status"></div>
+        
+        <etf-tabs-manager></etf-tabs-manager>
+    </div>
+
+    <script src="components.js"></script>
+    <script src="utils.js"></script>
+</body>
+</html>

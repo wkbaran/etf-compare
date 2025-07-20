@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETF Holdings Comparison Tool</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --border-color: #e5e7eb;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --hover-bg: #f3f4f6;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --border-color: #374151;
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --hover-bg: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-center {
+            flex: 2;
+            text-align: center;
+        }
+
+        .header-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover-bg);
+        }
+
+        input, textarea, select {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .etf-section {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: var(--bg-secondary);
+        }
+
+        .button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .button:hover {
+            background: #1d4ed8;
+        }
+
+        .button-secondary {
+            background: #6b7280;
+        }
+
+        .button-secondary:hover {
+            background: #4b5563;
+        }
+
+        .comparison-view {
+            margin-top: 30px;
+        }
+
+        .holdings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .etf-column {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background: var(--bg-primary);
+        }
+
+        .etf-column h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .holding-item {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 2px;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .holding-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .holding-item.overlap {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        [data-theme="dark"] .holding-item.overlap {
+            background: #451a03;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .ticker {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .amount {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .usd-value {
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: normal;
+        }
+
+        .my-investment-value {
+            color: var(--success-color);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .holding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .description {
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-style: italic;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        .overlap-stats {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .tabs-container {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tabs-header {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: -1px;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 200px;
+        }
+
+        .tab.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--bg-primary);
+            margin-bottom: -1px;
+        }
+
+        .tab:hover:not(.active) {
+            background: var(--hover-bg);
+        }
+
+        .tab-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 60px;
+        }
+
+        .tab-close {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1;
+            padding: 2px;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-close:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .new-tab-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            transition: all 0.2s ease;
+        }
+
+        .new-tab-btn:hover {
+            background: var(--hover-bg);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .icon-button {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .icon-button:hover {
+            background: var(--hover-bg);
+            color: var(--primary-color);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .import-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: var(--success-color);
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .import-error {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: #dc2626;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <div class="header-left"></div>
+            <div class="header-center">ETF Holdings Comparison Tool</div>
+            <div class="header-right">
+                <button class="icon-button" id="global-export-btn" title="Export Data">📄</button>
+                <div class="file-input-wrapper">
+                    <input type="file" id="global-import-file" accept=".json">
+                    <label for="global-import-file" class="icon-button" title="Import Data">📁</label>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+            </div>
+        </h1>
+        <div id="global-import-status"></div>
+        
+        <etf-tabs-manager></etf-tabs-manager>
+    </div>
+
+    <script>
+        class ETFTabsManager extends HTMLElement {
+            constructor() {
+                super();
+                this.tabs = this.loadTabs();
+                this.activeTabId = this.tabs.length > 0 ? this.tabs[0].id : null;
+                this.render();
+            }
+
+            loadTabs() {
+                const stored = localStorage.getItem('etf-tabs');
+                const defaultTabs = stored ? JSON.parse(stored) : [{ id: 'tab1', name: 'Comparison 1', etfs: [] }];
+                return defaultTabs;
+            }
+
+            saveTabs() {
+                localStorage.setItem('etf-tabs', JSON.stringify(this.tabs));
+            }
+
+            render() {
+                this.innerHTML = `
+                    <div class="tabs-container">
+                        <div class="tabs-header">
+                            ${this.tabs.map(tab => `
+                                <div class="tab ${tab.id === this.activeTabId ? 'active' : ''}" data-tab-id="${tab.id}">
+                                    <span class="tab-name" contenteditable="true" data-original="${tab.name}">${tab.name}</span>
+                                    ${this.tabs.length > 1 ? `<span class="tab-close" data-close-tab="${tab.id}">×</span>` : ''}
+                                </div>
+                            `).join('')}
+                            <div class="new-tab-btn" id="new-tab-btn">+</div>
+                        </div>
+                    </div>
+                    ${this.tabs.map(tab => `
+                        <div class="tab-content ${tab.id === this.activeTabId ? 'active' : ''}" data-tab-content="${tab.id}">
+                            <etf-input-section data-tab-id="${tab.id}"></etf-input-section>
+                            <etf-comparison-view data-tab-id="${tab.id}"></etf-comparison-view>
+                        </div>
+                    `).join('')}
+                `;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                this.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('tab-close') && !e.target.classList.contains('tab-name')) {
+                            this.switchTab(tab.dataset.tabId);
+                        }
+                    });
+                });
+
+                this.querySelectorAll('.tab-close').forEach(closeBtn => {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.closeTab(closeBtn.dataset.closeTab);
+                    });
+                });
+
+                this.querySelectorAll('.tab-name').forEach(nameEl => {
+                    nameEl.addEventListener('blur', (e) => {
+                        this.updateTabName(e.target.closest('.tab').dataset.tabId, e.target.textContent.trim());
+                    });
+                    nameEl.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.target.blur();
+                        }
+                        if (e.key === 'Escape') {
+                            e.target.textContent = e.target.dataset.original;
+                            e.target.blur();
+                        }
+                    });
+                });
+
+                const newTabBtn = this.querySelector('#new-tab-btn');
+                if (newTabBtn) {
+                    newTabBtn.addEventListener('click', () => this.addNewTab());
+                }
+            }
+
+            addNewTab() {
+                const newId = 'tab' + Date.now();
+                const newTab = {
+                    id: newId,
+                    name: `Comparison ${this.tabs.length + 1}`,
+                    etfs: []
+                };
+                this.tabs.push(newTab);
+                this.activeTabId = newId;
+                this.saveTabs();
+                this.render();
+            }
+
+            closeTab(tabId) {
+                if (this.tabs.length <= 1) return;
+                
+                const tabIndex = this.tabs.findIndex(t => t.id === tabId);
+                this.tabs.splice(tabIndex, 1);
+                
+                if (this.activeTabId === tabId) {
+                    this.activeTabId = this.tabs[Math.max(0, tabIndex - 1)].id;
+                }
+                
+                this.saveTabs();
+                this.render();
+            }
+
+            switchTab(tabId) {
+                this.activeTabId = tabId;
+                this.render();
+            }
+
+            updateTabName(tabId, newName) {
+                if (!newName) return;
+                const tab = this.tabs.find(t => t.id === tabId);
+                if (tab) {
+                    tab.name = newName;
+                    this.saveTabs();
+                    this.render();
+                }
+            }
+
+            getActiveTab() {
+                return this.tabs.find(t => t.id === this.activeTabId);
+            }
+
+            updateTabETFs(tabId, etfs) {
+                const tab = this.tabs.find(t => t.id === tabId);
+                if (tab) {
+                    tab.etfs = etfs;
+                    this.saveTabs();
+                }
+            }
+
+            exportData() {
+                const exportData = {
+                    version: "1.0",
+                    exportDate: new Date().toISOString(),
+                    tabs: this.tabs.map(tab => ({
+                        id: tab.id,
+                        name: tab.name,
+                        etfs: tab.etfs
+                    }))
+                };
+
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `etf-comparison-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                this.showImportStatus('Data exported successfully!', false);
+            }
+
+            importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importData = JSON.parse(e.target.result);
+                        
+                        // Validate data structure
+                        if (!importData.tabs || !Array.isArray(importData.tabs)) {
+                            throw new Error('Invalid file format: missing tabs array');
+                        }
+
+                        // Validate each tab
+                        const validTabs = importData.tabs.every(tab => 
+                            tab.id && tab.name && Array.isArray(tab.etfs)
+                        );
+
+                        if (!validTabs) {
+                            throw new Error('Invalid file format: invalid tab structure');
+                        }
+
+                        // Confirm import
+                        const confirmMessage = `This will replace all current data with ${importData.tabs.length} tabs. Continue?`;
+                        if (!confirm(confirmMessage)) {
+                            event.target.value = ''; // Reset file input
+                            return;
+                        }
+
+                        // Import the data
+                        this.tabs = importData.tabs.map(tab => ({
+                            id: tab.id,
+                            name: tab.name,
+                            etfs: tab.etfs || []
+                        }));
+
+                        // Set active tab to first imported tab
+                        this.activeTabId = this.tabs.length > 0 ? this.tabs[0].id : null;
+                        
+                        this.saveTabs();
+                        this.render();
+                        
+                        this.showImportStatus(`Successfully imported ${importData.tabs.length} tabs!`, false);
+                        
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        this.showImportStatus(`Import failed: ${error.message}`, true);
+                    }
+                    
+                    // Reset file input
+                    event.target.value = '';
+                };
+                
+                reader.readAsText(file);
+            }
+
+            showImportStatus(message, isError = false) {
+                const statusEl = document.querySelector('#global-import-status');
+                if (statusEl) {
+                    statusEl.textContent = message;
+                    statusEl.className = isError ? 'import-error' : 'import-status';
+                    
+                    // Clear status after 3 seconds
+                    setTimeout(() => {
+                        statusEl.textContent = '';
+                        statusEl.className = '';
+                    }, 3000);
+                }
+            }
+        }
+
+        class ETFInputSection extends HTMLElement {
+            constructor() {
+                super();
+                this.tabId = null;
+                this.etfs = [];
+            }
+
+            connectedCallback() {
+                this.tabId = this.dataset.tabId;
+                this.etfs = this.loadETFs();
+                this.render();
+            }
+
+            loadETFs() {
+                const tabsManager = document.querySelector('etf-tabs-manager');
+                if (tabsManager && this.tabId) {
+                    const tab = tabsManager.tabs.find(t => t.id === this.tabId);
+                    return tab ? tab.etfs : [];
+                }
+                return [];
+            }
+
+            saveETFs() {
+                const tabsManager = document.querySelector('etf-tabs-manager');
+                if (tabsManager && this.tabId) {
+                    tabsManager.updateTabETFs(this.tabId, this.etfs);
+                    this.dispatchEvent(new CustomEvent('etfs-updated', { 
+                        detail: { tabId: this.tabId, etfs: this.etfs },
+                        bubbles: true 
+                    }));
+                }
+            }
+
+            render() {
+                this.innerHTML = `
+                    <div class="etf-section">
+                        <h2>Add ETF Holdings</h2>
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" id="etf-name" placeholder="ETF Name (e.g., CIBR, UFO)" 
+                                   style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 10px; width: 120px;">
+                            <input type="number" id="etf-total-value" placeholder="123" min="1" max="9999"
+                                   style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 5px; width: 60px;">
+                            <select id="etf-value-unit" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 10px; width: 50px;">
+                                <option value="M">M</option>
+                                <option value="B" selected>B</option>
+                            </select>
+                            <input type="number" id="my-investment" placeholder="My $" min="0" step="0.01"
+                                   style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 10px; width: 100px;">
+                            <button class="button" onclick="this.parentElement.parentElement.querySelector('.input-area').style.display='block'">
+                                Add New ETF
+                            </button>
+                        </div>
+                        
+                        <div class="input-area" style="display: none;">
+                            <div style="margin-bottom: 15px;">
+                                <label>Paste ETF holdings data:</label>
+                                <textarea id="holdings-data" placeholder="Paste your ETF holdings data here..." 
+                                         style="width: 100%; height: 200px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 5px; font-family: monospace;"></textarea>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label>Column mapping:</label>
+                                <div style="margin-top: 8px;">
+                                    <select id="ticker-column" style="padding: 6px; margin-right: 10px; border: 1px solid var(--border-color); border-radius: 4px;">
+                                        <option value="">Select ticker column</option>
+                                    </select>
+                                    <select id="amount-column" style="padding: 6px; margin-right: 10px; border: 1px solid var(--border-color); border-radius: 4px;">
+                                        <option value="">Select amount column</option>
+                                    </select>
+                                    <select id="description-column" style="padding: 6px; margin-right: 10px; border: 1px solid var(--border-color); border-radius: 4px;">
+                                        <option value="">Select description column (optional)</option>
+                                    </select>
+                                    <button class="button-secondary button" id="detect-btn">
+                                        Detect Columns
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <button class="button" id="process-btn">Process ETF</button>
+                                <button class="button-secondary button" onclick="this.parentElement.style.display='none'">Cancel</button>
+                            </div>
+                        </div>
+                        
+                        <div class="existing-etfs">
+                            ${this.renderExistingETFs()}
+                        </div>
+                    </div>
+                `;
+                
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                const detectBtn = this.querySelector('#detect-btn');
+                const processBtn = this.querySelector('#process-btn');
+                
+                if (detectBtn) {
+                    detectBtn.addEventListener('click', () => this.detectColumns());
+                }
+                
+                if (processBtn) {
+                    processBtn.addEventListener('click', () => this.processETF());
+                }
+                
+                this.querySelectorAll('[data-remove-index]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = parseInt(e.target.getAttribute('data-remove-index'));
+                        this.removeETF(index);
+                    });
+                });
+            }
+
+            renderExistingETFs() {
+                if (this.etfs.length === 0) return '';
+                
+                return `
+                    <div style="margin-top: 20px;">
+                        <h3>Loaded ETFs:</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                            ${this.etfs.map((etf, index) => `
+                                <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
+                                    <span style="color: var(--text-primary);"><strong>${etf.name}</strong> ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''} - ${etf.holdings.length} holdings</span>
+                                    <button class="button-secondary button" style="padding: 4px 8px; font-size: 12px;" data-remove-index="${index}">Remove</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            detectColumns() {
+                const data = document.getElementById('holdings-data').value.trim();
+                if (!data) return;
+
+                const lines = data.split('\n').filter(line => line.trim());
+                if (lines.length === 0) return;
+
+                const headers = lines[0].split(/\s{2,}|\t/).map(h => h.trim());
+                
+                const tickerSelect = document.getElementById('ticker-column');
+                const amountSelect = document.getElementById('amount-column');
+                const descriptionSelect = document.getElementById('description-column');
+                
+                tickerSelect.innerHTML = '<option value="">Select ticker column</option>';
+                amountSelect.innerHTML = '<option value="">Select amount column</option>';
+                descriptionSelect.innerHTML = '<option value="">Select description column (optional)</option>';
+                
+                headers.forEach((header, index) => {
+                    tickerSelect.innerHTML += `<option value="${index}">${header}</option>`;
+                    amountSelect.innerHTML += `<option value="${index}">${header}</option>`;
+                    descriptionSelect.innerHTML += `<option value="${index}">${header}</option>`;
+                });
+
+                const tickerPattern = /ticker|symbol/i;
+                const amountPattern = /weight|%|amount|value|assets/i;
+                const descriptionPattern = /name|description|company|security/i;
+                
+                headers.forEach((header, index) => {
+                    if (tickerPattern.test(header)) {
+                        tickerSelect.value = index;
+                    }
+                    if (amountPattern.test(header)) {
+                        amountSelect.value = index;
+                    }
+                    if (descriptionPattern.test(header)) {
+                        descriptionSelect.value = index;
+                    }
+                });
+            }
+
+            processETF() {
+                const name = document.getElementById('etf-name').value.trim();
+                const totalValue = parseFloat(document.getElementById('etf-total-value').value);
+                const valueUnit = document.getElementById('etf-value-unit').value;
+                const myInvestment = parseFloat(document.getElementById('my-investment').value);
+                const data = document.getElementById('holdings-data').value.trim();
+                const tickerCol = parseInt(document.getElementById('ticker-column').value);
+                const amountCol = parseInt(document.getElementById('amount-column').value);
+                const descriptionCol = document.getElementById('description-column').value;
+
+                if (!name || !data || isNaN(tickerCol) || isNaN(amountCol)) {
+                    alert('Please fill all fields and select ticker/amount columns');
+                    return;
+                }
+
+                const lines = data.split('\n').filter(line => line.trim());
+                const holdings = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(/\s{2,}|\t/).map(c => c.trim());
+                    if (cols.length > Math.max(tickerCol, amountCol)) {
+                        const ticker = cols[tickerCol];
+                        const amount = cols[amountCol];
+                        const description = descriptionCol && !isNaN(parseInt(descriptionCol)) ? cols[parseInt(descriptionCol)] : '';
+                        
+                        if (ticker && amount && ticker !== 'CASH' && !ticker.includes('Index')) {
+                            holdings.push({
+                                ticker: ticker.toUpperCase(),
+                                amount: parseFloat(amount.replace(/[^\d.-]/g, '')) || 0,
+                                description: description || ''
+                            });
+                        }
+                    }
+                }
+
+                if (holdings.length === 0) {
+                    alert('No valid holdings found');
+                    return;
+                }
+
+                const totalValueInUSD = totalValue ? totalValue * (valueUnit === 'B' ? 1000000000 : 1000000) : null;
+                
+                this.etfs.push({ 
+                    name, 
+                    holdings, 
+                    totalValue: totalValueInUSD,
+                    displayValue: totalValue ? `$${totalValue}${valueUnit}` : null,
+                    myInvestment: myInvestment || 0
+                });
+                this.saveETFs();
+                
+                document.getElementById('etf-name').value = '';
+                document.getElementById('etf-total-value').value = '';
+                document.getElementById('my-investment').value = '';
+                document.getElementById('holdings-data').value = '';
+                document.querySelector('.input-area').style.display = 'none';
+                
+                this.render();
+            }
+
+            removeETF(index) {
+                this.etfs.splice(index, 1);
+                this.saveETFs();
+                this.render();
+            }
+        }
+
+        class ETFComparisonView extends HTMLElement {
+            constructor() {
+                super();
+                this.tabId = null;
+                this.etfs = [];
+            }
+
+            connectedCallback() {
+                this.tabId = this.dataset.tabId;
+                this.etfs = this.loadETFs();
+                this.render();
+                
+                document.addEventListener('etfs-updated', (e) => {
+                    if (e.detail.tabId === this.tabId) {
+                        this.etfs = e.detail.etfs;
+                        this.render();
+                    }
+                });
+            }
+
+            loadETFs() {
+                const tabsManager = document.querySelector('etf-tabs-manager');
+                if (tabsManager && this.tabId) {
+                    const tab = tabsManager.tabs.find(t => t.id === this.tabId);
+                    return tab ? tab.etfs : [];
+                }
+                return [];
+            }
+
+            render() {
+                if (this.etfs.length === 0) {
+                    this.innerHTML = '';
+                    return;
+                }
+
+                const overlaps = this.calculateOverlaps();
+                
+                this.innerHTML = `
+                    <div class="comparison-view">
+                        ${this.renderOverlapStats(overlaps)}
+                        ${this.renderHoldingsComparison(overlaps)}
+                    </div>
+                `;
+            }
+
+            calculateOverlaps() {
+                if (this.etfs.length < 2) return { overlapping: [], stats: {} };
+
+                const allTickers = new Set();
+                const tickerToETFs = {};
+
+                this.etfs.forEach((etf, etfIndex) => {
+                    etf.holdings.forEach(holding => {
+                        const ticker = holding.ticker;
+                        allTickers.add(ticker);
+                        if (!tickerToETFs[ticker]) {
+                            tickerToETFs[ticker] = [];
+                        }
+                        tickerToETFs[ticker].push({ etfIndex, ...holding });
+                    });
+                });
+
+                const overlapping = Array.from(allTickers).filter(ticker => 
+                    tickerToETFs[ticker].length > 1
+                );
+
+                const stats = {
+                    totalUnique: allTickers.size,
+                    overlapping: overlapping.length,
+                    overlapPercentage: ((overlapping.length / allTickers.size) * 100).toFixed(1)
+                };
+
+                return { overlapping, tickerToETFs, stats };
+            }
+
+            renderOverlapStats(overlaps) {
+                if (this.etfs.length < 2) return '';
+
+                return `
+                    <div class="overlap-stats">
+                        <h3>Overlap Analysis</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">${overlaps.stats.totalUnique}</div>
+                                <div class="stat-label">Total Unique Holdings</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${overlaps.stats.overlapping}</div>
+                                <div class="stat-label">Overlapping Holdings</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${overlaps.stats.overlapPercentage}%</div>
+                                <div class="stat-label">Overlap Percentage</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderHoldingsComparison(overlaps) {
+                if (this.etfs.length === 0) return '';
+
+                const allTickers = new Set();
+                this.etfs.forEach(etf => {
+                    etf.holdings.forEach(holding => allTickers.add(holding.ticker));
+                });
+
+                const sortedTickers = Array.from(allTickers).sort();
+
+                return `
+                    <div class="holdings-grid">
+                        ${this.etfs.map((etf, etfIndex) => `
+                            <div class="etf-column">
+                                <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                                ${sortedTickers.map(ticker => {
+                                    const holding = etf.holdings.find(h => h.ticker === ticker);
+                                    const isOverlap = overlaps.tickerToETFs && overlaps.tickerToETFs[ticker] && overlaps.tickerToETFs[ticker].length > 1;
+                                    
+                                    if (holding) {
+                                        const usdValue = etf.totalValue ? (etf.totalValue * holding.amount / 100) : null;
+                                        const usdDisplay = usdValue ? 
+                                            (usdValue >= 1000000000 ? `$${(usdValue/1000000000).toFixed(1)}B` :
+                                             usdValue >= 1000000 ? `$${(usdValue/1000000).toFixed(1)}M` :
+                                             `$${(usdValue/1000).toFixed(0)}K`) : '';
+                                        
+                                        // Calculate personal position based on percentage of personal investment, not ETF total value
+                                        const myPositionValue = etf.myInvestment ? (etf.myInvestment * holding.amount / 100) : null;
+                                        const myPositionDisplay = myPositionValue ? 
+                                            (myPositionValue >= 1000000 ? `$${(myPositionValue/1000000).toFixed(2)}M` :
+                                             myPositionValue >= 1000 ? `$${(myPositionValue/1000).toFixed(1)}K` :
+                                             myPositionValue >= 1 ? `$${myPositionValue.toFixed(2)}` :
+                                             `$${myPositionValue.toFixed(2)}`) : '';
+                                        
+                                        return `
+                                            <div class="holding-item ${isOverlap ? 'overlap' : ''}">
+                                                <div class="holding-header">
+                                                    <span class="ticker">${ticker}</span>
+                                                    <div style="text-align: right;">
+                                                        <div class="amount">${holding.amount.toFixed(2)}%</div>
+                                                        ${usdDisplay ? `<div class="usd-value">${usdDisplay}</div>` : ''}
+                                                        ${myPositionDisplay ? `<div class="my-investment-value">My: ${myPositionDisplay}</div>` : ''}
+                                                    </div>
+                                                </div>
+                                                ${holding.description ? `<div class="description">${holding.description}</div>` : ''}
+                                            </div>
+                                        `;
+                                    } else if (isOverlap) {
+                                        return `
+                                            <div class="holding-item" style="opacity: 0.3;">
+                                                <div class="holding-header">
+                                                    <span class="ticker">${ticker}</span>
+                                                    <span class="amount">—</span>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                    return '';
+                                }).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        customElements.define('etf-tabs-manager', ETFTabsManager);
+        customElements.define('etf-input-section', ETFInputSection);
+        customElements.define('etf-comparison-view', ETFComparisonView);
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? '' : 'dark';
+            const toggleBtn = document.querySelector('.theme-toggle');
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            toggleBtn.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const toggleBtn = document.querySelector('.theme-toggle');
+            
+            if (savedTheme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                toggleBtn.textContent = '☀️ Light Mode';
+            } else {
+                toggleBtn.textContent = '🌙 Dark Mode';
+            }
+        }
+
+        // Migration function to move old data to new tab format
+        function migrateOldData() {
+            const oldData = localStorage.getItem('etf-data');
+            const newTabs = localStorage.getItem('etf-tabs');
+            
+            if (oldData && !newTabs) {
+                const etfs = JSON.parse(oldData);
+                const defaultTab = {
+                    id: 'tab1',
+                    name: 'Comparison 1',
+                    etfs: etfs
+                };
+                localStorage.setItem('etf-tabs', JSON.stringify([defaultTab]));
+                localStorage.removeItem('etf-data');
+            }
+        }
+
+        function setupGlobalControls() {
+            const exportBtn = document.querySelector('#global-export-btn');
+            const importFile = document.querySelector('#global-import-file');
+            const tabsManager = document.querySelector('etf-tabs-manager');
+
+            if (exportBtn && tabsManager) {
+                exportBtn.addEventListener('click', () => {
+                    tabsManager.exportData();
+                });
+            }
+
+            if (importFile && tabsManager) {
+                importFile.addEventListener('change', (e) => {
+                    tabsManager.importData(e);
+                });
+            }
+        }
+
+        window.addEventListener('load', () => {
+            loadTheme();
+            migrateOldData();
+            
+            // Setup global controls after components are loaded
+            setTimeout(setupGlobalControls, 100);
+        });
+    </script>
+</body>
+</html>
