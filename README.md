@@ -2,6 +2,8 @@
 
 A lightweight, browser-based application for comparing and analyzing ETF holdings data. Built with modern web components and vanilla JavaScript - no frameworks required.
 
+![ETF Holdings Comparison Tool Screenshot](docs/screenshot.png)
+
 ## Features
 
 ### ETF Data Management
