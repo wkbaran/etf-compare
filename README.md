@@ -81,7 +81,7 @@ PLANET LABS PBC         PL        3.966075  143497.000
 
 ```
 etf-compare/
-├── index-new.html      # Main application file
+├── index.html      # Main application file
 ├── styles.css          # All CSS styles and theming
 ├── components.js       # Web components (ETF management, comparison)
 ├── utils.js           # Utilities (theme, import/export, initialization)
