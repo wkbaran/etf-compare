@@ -93,6 +93,20 @@ class ETFTabsManager extends HTMLElement {
     closeTab(tabId) {
         if (this.tabs.length <= 1) return;
         
+        const tab = this.tabs.find(t => t.id === tabId);
+        if (!tab) return;
+        
+        // Check if tab has any ETFs
+        if (tab.etfs && tab.etfs.length > 0) {
+            const etfCount = tab.etfs.length;
+            const tabName = tab.name;
+            const confirmMessage = `"${tabName}" contains ${etfCount} ETF${etfCount > 1 ? 's' : ''}. Are you sure you want to close this tab? This will permanently delete all ETF data in this tab.`;
+            
+            if (!confirm(confirmMessage)) {
+                return; // User cancelled, don't close the tab
+            }
+        }
+        
         const tabIndex = this.tabs.findIndex(t => t.id === tabId);
         this.tabs.splice(tabIndex, 1);
         
@@ -445,7 +459,7 @@ class ETFInputSection extends HTMLElement {
     }
 
     detectColumns() {
-        const data = document.getElementById('holdings-data').value.trim();
+        const data = this.querySelector('#holdings-data').value.trim();
         if (!data) return;
 
         const lines = data.split('\n').filter(line => line.trim());
@@ -453,9 +467,9 @@ class ETFInputSection extends HTMLElement {
 
         const headers = lines[0].split(/\s{2,}|\t/).map(h => h.trim());
         
-        const tickerSelect = document.getElementById('ticker-column');
-        const amountSelect = document.getElementById('amount-column');
-        const descriptionSelect = document.getElementById('description-column');
+        const tickerSelect = this.querySelector('#ticker-column');
+        const amountSelect = this.querySelector('#amount-column');
+        const descriptionSelect = this.querySelector('#description-column');
         
         tickerSelect.innerHTML = '<option value="">Select ticker column</option>';
         amountSelect.innerHTML = '<option value="">Select amount column</option>';
@@ -485,14 +499,14 @@ class ETFInputSection extends HTMLElement {
     }
 
     processETF() {
-        const name = document.getElementById('etf-name').value.trim();
-        const totalValue = parseFloat(document.getElementById('etf-total-value').value);
-        const valueUnit = document.getElementById('etf-value-unit').value;
-        const myInvestment = parseFloat(document.getElementById('my-investment').value);
-        const data = document.getElementById('holdings-data').value.trim();
-        const tickerCol = parseInt(document.getElementById('ticker-column').value);
-        const amountCol = parseInt(document.getElementById('amount-column').value);
-        const descriptionCol = document.getElementById('description-column').value;
+        const name = this.querySelector('#etf-name').value.trim();
+        const totalValue = parseFloat(this.querySelector('#etf-total-value').value);
+        const valueUnit = this.querySelector('#etf-value-unit').value;
+        const myInvestment = parseFloat(this.querySelector('#my-investment').value);
+        const data = this.querySelector('#holdings-data').value.trim();
+        const tickerCol = parseInt(this.querySelector('#ticker-column').value);
+        const amountCol = parseInt(this.querySelector('#amount-column').value);
+        const descriptionCol = this.querySelector('#description-column').value;
 
         if (!name || !data || isNaN(tickerCol) || isNaN(amountCol)) {
             alert('Please fill all fields and select ticker/amount columns');
@@ -535,11 +549,11 @@ class ETFInputSection extends HTMLElement {
         });
         this.saveETFs();
         
-        document.getElementById('etf-name').value = '';
-        document.getElementById('etf-total-value').value = '';
-        document.getElementById('my-investment').value = '';
-        document.getElementById('holdings-data').value = '';
-        document.querySelector('.input-area').style.display = 'none';
+        this.querySelector('#etf-name').value = '';
+        this.querySelector('#etf-total-value').value = '';
+        this.querySelector('#my-investment').value = '';
+        this.querySelector('#holdings-data').value = '';
+        this.querySelector('.input-area').style.display = 'none';
         
         this.render();
     }
