@@ -153,6 +153,27 @@ h1 {
     padding-bottom: 0;
 }
 
+.reorder-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    margin: 0 2px;
+}
+
+.etf-column:hover .reorder-btn {
+    opacity: 0.6;
+}
+
+.reorder-btn:hover {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
 .copy-etf-btn {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);

@@ -191,6 +191,35 @@ class ETFTabsManager extends HTMLElement {
         return true;
     }
 
+    reorderETF(tabId, fromIndex, toIndex) {
+        const tab = this.tabs.find(t => t.id === tabId);
+        if (!tab || fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
+            fromIndex >= tab.etfs.length || toIndex >= tab.etfs.length) {
+            return false;
+        }
+
+        // Remove ETF from current position and insert at new position
+        const [movedETF] = tab.etfs.splice(fromIndex, 1);
+        tab.etfs.splice(toIndex, 0, movedETF);
+        
+        this.saveTabs();
+        
+        // Trigger re-render of the tab
+        const inputSection = this.querySelector(`etf-input-section[data-tab-id="${tabId}"]`);
+        const comparisonView = this.querySelector(`etf-comparison-view[data-tab-id="${tabId}"]`);
+        
+        if (inputSection) {
+            inputSection.etfs = tab.etfs;
+            inputSection.render();
+        }
+        if (comparisonView) {
+            comparisonView.etfs = tab.etfs;
+            comparisonView.render();
+        }
+        
+        return true;
+    }
+
     exportData() {
         const exportData = {
             version: "1.0",
@@ -621,6 +650,7 @@ class ETFComparisonView extends HTMLElement {
         
         this.setupCopyButtons();
         this.setupETFSortControls();
+        this.setupReorderButtons();
     }
 
     calculateOverlaps() {
@@ -759,6 +789,21 @@ class ETFComparisonView extends HTMLElement {
         });
     }
 
+    setupReorderButtons() {
+        this.querySelectorAll('.reorder-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                const direction = e.target.getAttribute('data-direction');
+                const tabsManager = document.querySelector('etf-tabs-manager');
+                
+                if (tabsManager && this.tabId) {
+                    const newIndex = direction === 'left' ? etfIndex - 1 : etfIndex + 1;
+                    tabsManager.reorderETF(this.tabId, etfIndex, newIndex);
+                }
+            });
+        });
+    }
+
     renderOverlapStats(overlaps) {
         if (this.etfs.length < 2) return '';
 
@@ -807,13 +852,15 @@ class ETFComparisonView extends HTMLElement {
                     }
 
                     return `
-                        <div class="etf-column">
+                        <div class="etf-column" data-etf-index="${etfIndex}">
                             <div class="etf-header">
+                                ${etfIndex > 0 ? `<button class="reorder-btn reorder-left" data-etf-index="${etfIndex}" data-direction="left" title="Move left">◀</button>` : ''}
                                 <div style="flex: 1;">
                                     <h3 style="margin: 0;">${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
                                     ${etf.displayName ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${etf.displayName}</div>` : ''}
                                 </div>
                                 ${showCopyButton ? `<button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>` : ''}
+                                ${etfIndex < this.etfs.length - 1 ? `<button class="reorder-btn reorder-right" data-etf-index="${etfIndex}" data-direction="right" title="Move right">▶</button>` : ''}
                             </div>
                             <div class="etf-sort-controls" style="position: relative; margin: 4px 0; height: 20px;">
                                 <button class="sort-arrow sort-ticker" data-etf-index="${etfIndex}" data-sort="ticker" 
