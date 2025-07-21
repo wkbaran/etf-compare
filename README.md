@@ -129,34 +129,6 @@ See exactly how your money is allocated:
 - ETF Level: "CIBR ($23B) - My: $5,000"
 - Holding Level: "AAPL 5.2% - $260 - My: $260"
 
-## Troubleshooting
-
-### Data Not Parsing Correctly
-1. Check column detection - ensure ticker and percentage columns are selected
-2. Verify data format - should be tab or space-separated
-3. Look for special characters in percentage values
-
-### Import/Export Issues
-1. Ensure JSON file is from this application
-2. Check browser storage quota (usually 5-10MB available)
-3. Try smaller datasets if hitting storage limits
-
-### Theme Not Persisting
-1. Check if browser allows localStorage
-2. Ensure you're not in private/incognito mode
-3. Clear browser cache and try again
-
-## Contributing
-
-This is a standalone application built for personal ETF analysis. The code is designed to be:
-- **Self-contained**: No build process required
-- **Readable**: Well-commented and organized
-- **Extensible**: Easy to add new features
-
-## License
-
-MIT License - Feel free to use, modify, and distribute.
-
 ## Version History
 
 - **v1.0**: Initial release with basic ETF comparison
