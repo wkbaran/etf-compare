@@ -439,7 +439,7 @@ class ETFInputSection extends HTMLElement {
                     
                     <div>
                         <button class="button" id="process-btn">Process ETF</button>
-                        <button class="button-secondary button" onclick="this.parentElement.style.display='none'">Cancel</button>
+                        <button class="button-secondary button" onclick="this.parentElement.parentElement.style.display='none'">Cancel</button>
                     </div>
                 </div>
             </div>
