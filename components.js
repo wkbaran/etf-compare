@@ -609,11 +609,13 @@ class ETFComparisonView extends HTMLElement {
         this.tabId = null;
         this.etfs = [];
         this.etfSortState = {}; // Track sort state per ETF: {etfIndex: 'ticker'|'weight'}
+        this.etfCollapseState = {}; // Track collapse state per ETF: {etfIndex: boolean}
     }
 
     connectedCallback() {
         this.tabId = this.dataset.tabId;
         this.etfs = this.loadETFs();
+        this.etfCollapseState = this.loadCollapseState();
         this.render();
         
         document.addEventListener('etfs-updated', (e) => {
@@ -631,6 +633,19 @@ class ETFComparisonView extends HTMLElement {
             return tab ? tab.etfs : [];
         }
         return [];
+    }
+
+    saveCollapseState() {
+        if (!this.tabId) return;
+        const storageKey = `etf-collapse-${this.tabId}`;
+        localStorage.setItem(storageKey, JSON.stringify(this.etfCollapseState));
+    }
+
+    loadCollapseState() {
+        if (!this.tabId) return {};
+        const storageKey = `etf-collapse-${this.tabId}`;
+        const stored = localStorage.getItem(storageKey);
+        return stored ? JSON.parse(stored) : {};
     }
 
     render() {
@@ -651,6 +666,7 @@ class ETFComparisonView extends HTMLElement {
         this.setupCopyButtons();
         this.setupETFSortControls();
         this.setupReorderButtons();
+        this.setupCollapseButtons();
     }
 
     calculateOverlaps() {
@@ -804,6 +820,17 @@ class ETFComparisonView extends HTMLElement {
         });
     }
 
+    setupCollapseButtons() {
+        this.querySelectorAll('.collapse-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const etfKey = e.target.getAttribute('data-etf-key');
+                this.etfCollapseState[etfKey] = !this.etfCollapseState[etfKey];
+                this.saveCollapseState();
+                this.render();
+            });
+        });
+    }
+
     renderOverlapStats(overlaps) {
         if (this.etfs.length < 2) return '';
 
@@ -843,6 +870,13 @@ class ETFComparisonView extends HTMLElement {
                         this.etfSortState[etfIndex] = 'ticker';
                     }
                     
+                    // Initialize collapse state for this ETF if not set (default: expanded)
+                    // Use ETF name as key for persistence across reorders
+                    const etfKey = etf.name;
+                    if (!this.etfCollapseState.hasOwnProperty(etfKey)) {
+                        this.etfCollapseState[etfKey] = false;
+                    }
+                    
                     // Sort this ETF's holdings based on its individual sort state
                     let sortedHoldings;
                     if (this.etfSortState[etfIndex] === 'weight') {
@@ -859,22 +893,24 @@ class ETFComparisonView extends HTMLElement {
                                     <h3 style="margin: 0;">${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
                                     ${etf.displayName ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${etf.displayName}</div>` : ''}
                                 </div>
+                                <button class="collapse-btn" data-etf-key="${etfKey}" title="${this.etfCollapseState[etfKey] ? 'Expand holdings' : 'Collapse holdings'}">${this.etfCollapseState[etfKey] ? '▲' : '▼'}</button>
                                 ${showCopyButton ? `<button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>` : ''}
                                 ${etfIndex < this.etfs.length - 1 ? `<button class="reorder-btn reorder-right" data-etf-index="${etfIndex}" data-direction="right" title="Move right">▶</button>` : ''}
                             </div>
-                            <div class="etf-sort-controls" style="position: relative; margin: 4px 0; height: 20px;">
-                                <button class="sort-arrow sort-ticker" data-etf-index="${etfIndex}" data-sort="ticker" 
-                                        style="position: absolute; left: 0; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 2px; ${this.etfSortState[etfIndex] === 'ticker' ? 'opacity: 1;' : 'opacity: 0.3;'}" 
-                                        title="Sort alphabetically by ticker">
-                                    ↑A-Z
-                                </button>
-                                <button class="sort-arrow sort-weight" data-etf-index="${etfIndex}" data-sort="weight" 
-                                        style="position: absolute; right: 0; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 2px; ${this.etfSortState[etfIndex] === 'weight' ? 'opacity: 1;' : 'opacity: 0.3;'}" 
-                                        title="Sort by weight (high to low)">
-                                    ↓%
-                                </button>
-                            </div>
-                            ${sortedHoldings.map(holding => {
+                            <div class="etf-holdings-content ${this.etfCollapseState[etfKey] ? 'collapsed' : 'expanded'}">
+                                <div class="etf-sort-controls" style="position: relative; margin: 4px 0; height: 20px;">
+                                    <button class="sort-arrow sort-ticker" data-etf-index="${etfIndex}" data-sort="ticker" 
+                                            style="position: absolute; left: 0; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 2px; ${this.etfSortState[etfIndex] === 'ticker' ? 'opacity: 1;' : 'opacity: 0.3;'}" 
+                                            title="Sort alphabetically by ticker">
+                                        ↑A-Z
+                                    </button>
+                                    <button class="sort-arrow sort-weight" data-etf-index="${etfIndex}" data-sort="weight" 
+                                            style="position: absolute; right: 0; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 2px; ${this.etfSortState[etfIndex] === 'weight' ? 'opacity: 1;' : 'opacity: 0.3;'}" 
+                                            title="Sort by weight (high to low)">
+                                        ↓%
+                                    </button>
+                                </div>
+                                ${sortedHoldings.map(holding => {
                                 const isOverlap = overlaps.tickerToETFs && overlaps.tickerToETFs[holding.ticker] && overlaps.tickerToETFs[holding.ticker].length > 1;
                                 
                                 const usdValue = etf.totalValue ? (etf.totalValue * holding.amount / 100) : null;
@@ -907,6 +943,7 @@ class ETFComparisonView extends HTMLElement {
                                     </div>
                                 `;
                             }).join('')}
+                            </div>
                         </div>
                     `;
                 }).join('')}
