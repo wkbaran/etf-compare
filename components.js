@@ -442,10 +442,6 @@ class ETFInputSection extends HTMLElement {
                         <button class="button-secondary button" onclick="this.parentElement.style.display='none'">Cancel</button>
                     </div>
                 </div>
-                
-                <div class="existing-etfs">
-                    ${this.renderExistingETFs()}
-                </div>
             </div>
         `;
         
@@ -667,6 +663,7 @@ class ETFComparisonView extends HTMLElement {
         this.setupETFSortControls();
         this.setupReorderButtons();
         this.setupCollapseButtons();
+        this.setupRemoveButtons();
     }
 
     isValidTickerForOverlap(ticker) {
@@ -855,6 +852,39 @@ class ETFComparisonView extends HTMLElement {
         });
     }
 
+    setupRemoveButtons() {
+        this.querySelectorAll('.remove-etf-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                const etf = this.etfs[etfIndex];
+                
+                if (confirm(`Are you sure you want to remove "${etf.name}"?`)) {
+                    this.removeETF(etfIndex);
+                }
+            });
+        });
+    }
+
+    removeETF(etfIndex) {
+        // Remove ETF from the array
+        this.etfs.splice(etfIndex, 1);
+        
+        // Update the tab's ETF data
+        const tabsManager = document.querySelector('etf-tabs-manager');
+        if (tabsManager && this.tabId) {
+            tabsManager.updateTabETFs(this.tabId, this.etfs);
+        }
+        
+        // Re-render the view
+        this.render();
+        
+        // Dispatch update event
+        this.dispatchEvent(new CustomEvent('etfs-updated', { 
+            detail: { tabId: this.tabId, etfs: this.etfs },
+            bubbles: true 
+        }));
+    }
+
     renderOverlapStats(overlaps) {
         if (this.etfs.length < 2) return '';
 
@@ -918,6 +948,7 @@ class ETFComparisonView extends HTMLElement {
                                     ${etf.displayName ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${etf.displayName}</div>` : ''}
                                 </div>
                                 <button class="collapse-btn" data-etf-key="${etfKey}" title="${this.etfCollapseState[etfKey] ? 'Expand holdings' : 'Collapse holdings'}">${this.etfCollapseState[etfKey] ? '▲' : '▼'}</button>
+                                <button class="remove-etf-btn" data-etf-index="${etfIndex}" title="Remove ETF">🗑️</button>
                                 ${showCopyButton ? `<button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>` : ''}
                                 ${etfIndex < this.etfs.length - 1 ? `<button class="reorder-btn reorder-right" data-etf-index="${etfIndex}" data-direction="right" title="Move right">▶</button>` : ''}
                             </div>

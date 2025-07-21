@@ -234,6 +234,35 @@ h1 {
     transform: scale(1.05);
 }
 
+.remove-etf-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.etf-header:hover .remove-etf-btn {
+    opacity: 1;
+}
+
+.remove-etf-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+    transform: scale(1.05);
+}
+
+[data-theme="dark"] .remove-etf-btn:hover {
+    background: #450a0a;
+    color: #fca5a5;
+    border-color: #991b1b;
+}
+
 .copy-modal-content {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
