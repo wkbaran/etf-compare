@@ -22,7 +22,9 @@ A lightweight, browser-based application for comparing and analyzing ETF holding
 - **Side-by-Side Comparison**: View multiple ETFs in aligned columns
 - **Overlap Detection**: Automatically highlights shared holdings between ETFs
 - **Overlap Statistics**: Shows total unique holdings, overlapping count, and percentages
-- **Alphabetical Sorting**: Holdings sorted alphabetically for easy comparison
+- **Flexible Sorting**: Sort each ETF independently by ticker (A-Z) or weight (high to low)
+- **Collapsible Holdings**: Collapse/expand individual ETF holdings lists
+- **ETF Management**: Reorder, copy between tabs, or remove ETFs with hover controls
 
 ### Data Management
 - **Browser Storage**: All data persists automatically in localStorage
@@ -32,8 +34,9 @@ A lightweight, browser-based application for comparing and analyzing ETF holding
 ### User Experience
 - **Dark/Light Theme**: Toggle between themes with persistent preference
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **Tab System**: Organize different comparison sets (e.g., "Tech ETFs", "Bond Funds")
-- **Hover Effects**: Interactive feedback for better usability
+- **Tab System**: Organize different comparison sets with tab close confirmation
+- **Hover Controls**: Interactive buttons appear on hover for clean interface
+- **Optional Display Names**: Add descriptive names alongside ETF tickers
 
 ## Quick Start
 
@@ -161,3 +164,4 @@ MIT License - Feel free to use, modify, and distribute.
 - **v1.2**: Introduced tab system for multiple comparison sets
 - **v1.3**: Added personal investment tracking
 - **v1.4**: Modular file structure and improved maintainability
+- **v1.5**: Enhanced UI with per-ETF sorting, collapsible holdings, ETF reordering, tab close confirmation, and streamlined ETF management

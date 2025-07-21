@@ -104,12 +104,24 @@ Data parsing handles multiple formats via `detectColumns()` method that analyzes
 - `toggleTheme()` function switches `data-theme` attribute on `<body>`
 - Theme preference persisted in `localStorage['theme']`
 
+#### State Management Architecture (`components.js:ETFComparisonView`)
+- **Sort State**: `etfSortState = {etfIndex: 'ticker'|'weight'}` tracks per-ETF sorting
+- **Collapse State**: `etfCollapseState = {etfKey: boolean}` persists to localStorage separately
+- **ETF Key Strategy**: Uses ETF name as key for persistence across reorders
+- **Hover Controls**: CSS `:hover` selectors target `.etf-header` for clean UI
+
+#### Overlap Detection Enhancement (`components.js:isValidTickerForOverlap`)
+- **Validation Logic**: `/[A-Z0-9]/.test(firstChar)` ensures tickers start with alphanumeric
+- **Exclusion Patterns**: Filters 'CASH', 'N/A', dashes, and INDEX-containing strings
+- **Performance**: Set-based intersection for efficient duplicate detection
+
 ## Data Model
 
 ### ETF Object Structure
 ```javascript
 {
   name: "CIBR",                    // ETF ticker/name
+  displayName: "iShares Cybersecurity", // Optional display name
   totalValue: 2000000000,          // Total ETF value in USD
   displayValue: "$2B",             // Formatted display string
   myInvestment: 5000,              // User's personal investment
@@ -150,7 +162,7 @@ Data parsing handles multiple formats via `detectColumns()` method that analyzes
 - **Detection Algorithm**: Set intersection across all ETF holdings
 - **Visual Highlighting**: Yellow background for overlapping holdings
 - **Statistics**: Total unique, overlapping count, percentage calculations
-- **Sorting**: Alphabetical ticker sorting for easy comparison
+- **Intelligent Filtering**: Excludes invalid tickers (cash, placeholders, symbols starting with non-alphanumeric characters)
 
 ### 4. Theme System
 - **CSS Custom Properties**: Complete variable-based theming
@@ -163,6 +175,24 @@ Data parsing handles multiple formats via `detectColumns()` method that analyzes
 - **Import/Export**: File-based backup/restore with JSON format
 - **Migration**: Automatic upgrade from single-tab to multi-tab format
 - **Error Recovery**: Graceful handling of corrupted localStorage data
+
+### 6. ETF Management & Sorting
+- **Per-ETF Sorting**: Independent sorting controls for each ETF (ticker A-Z or weight %)
+- **Sort State Persistence**: Individual sort preferences maintained per ETF column
+- **Sort Controls**: Subtle arrow buttons (↑A-Z, ↓%) that appear based on current sort state
+- **ETF Reordering**: Left/right arrow controls for repositioning ETFs in comparison view
+
+### 7. UI State Management
+- **Collapsible Holdings**: Expand/collapse ETF holdings lists with persistent state
+- **Display Names**: Optional descriptive names shown below ETF tickers
+- **Hover Controls**: Interactive buttons only visible when hovering over ETF headers
+- **Tab Close Confirmation**: Prevents accidental data loss when closing tabs with ETFs
+
+### 8. ETF Operations
+- **ETF Removal**: Delete button (🗑️) with confirmation dialog
+- **Cross-Tab Copying**: Copy ETFs between different comparison tabs
+- **Smart Copy Button**: Only shows when multiple tabs exist
+- **Clean State Management**: Proper cleanup of collapse states and sort preferences
 
 ## Development Patterns & Best Practices
 
