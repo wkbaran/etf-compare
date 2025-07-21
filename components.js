@@ -669,6 +669,27 @@ class ETFComparisonView extends HTMLElement {
         this.setupCollapseButtons();
     }
 
+    isValidTickerForOverlap(ticker) {
+        // Exclude invalid/placeholder tickers from overlap detection
+        if (!ticker || ticker.trim() === '') return false;
+        
+        const trimmed = ticker.trim().toUpperCase();
+        
+        // Exclude common placeholder text values
+        if (trimmed === 'CASH') return false;
+        if (trimmed === 'N/A') return false;
+        if (trimmed === 'TBD') return false;
+        if (trimmed === 'UNKNOWN') return false;
+        if (trimmed === 'OTHER') return false;
+        if (trimmed.includes('INDEX')) return false;
+        
+        // Exclude anything that doesn't start with a letter or number
+        const firstChar = trimmed.charAt(0);
+        if (!/[A-Z0-9]/.test(firstChar)) return false;
+        
+        return true;
+    }
+
     calculateOverlaps() {
         if (this.etfs.length < 2) return { overlapping: [], stats: {} };
 
@@ -678,11 +699,14 @@ class ETFComparisonView extends HTMLElement {
         this.etfs.forEach((etf, etfIndex) => {
             etf.holdings.forEach(holding => {
                 const ticker = holding.ticker;
-                allTickers.add(ticker);
-                if (!tickerToETFs[ticker]) {
-                    tickerToETFs[ticker] = [];
+                // Only include valid tickers in overlap detection
+                if (this.isValidTickerForOverlap(ticker)) {
+                    allTickers.add(ticker);
+                    if (!tickerToETFs[ticker]) {
+                        tickerToETFs[ticker] = [];
+                    }
+                    tickerToETFs[ticker].push({ etfIndex, ...holding });
                 }
-                tickerToETFs[ticker].push({ etfIndex, ...holding });
             });
         });
 
@@ -911,7 +935,7 @@ class ETFComparisonView extends HTMLElement {
                                     </button>
                                 </div>
                                 ${sortedHoldings.map(holding => {
-                                const isOverlap = overlaps.tickerToETFs && overlaps.tickerToETFs[holding.ticker] && overlaps.tickerToETFs[holding.ticker].length > 1;
+                                const isOverlap = this.isValidTickerForOverlap(holding.ticker) && overlaps.tickerToETFs && overlaps.tickerToETFs[holding.ticker] && overlaps.tickerToETFs[holding.ticker].length > 1;
                                 
                                 const usdValue = etf.totalValue ? (etf.totalValue * holding.amount / 100) : null;
                                 const usdDisplay = usdValue ? 
