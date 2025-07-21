@@ -156,6 +156,7 @@ class ETFTabsManager extends HTMLElement {
         // Create a deep copy of the ETF
         const etfCopy = {
             name: etf.name,
+            displayName: etf.displayName,
             totalValue: etf.totalValue,
             displayValue: etf.displayValue,
             myInvestment: etf.myInvestment,
@@ -365,8 +366,10 @@ class ETFInputSection extends HTMLElement {
             <div class="etf-section">
                 <h2>Add ETF Holdings</h2>
                 <div style="margin-bottom: 15px;">
-                    <input type="text" id="etf-name" placeholder="ETF Name (e.g., CIBR, UFO)" 
+                    <input type="text" id="etf-name" placeholder="ETF Ticker (e.g., CIBR, UFO)" 
                            style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 10px; width: 120px;">
+                    <input type="text" id="etf-display-name" placeholder="Display Name (optional)" 
+                           style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 10px; width: 150px;">
                     <input type="number" id="etf-total-value" placeholder="123" min="1" max="9999"
                            style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 5px; width: 60px;">
                     <select id="etf-value-unit" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-right: 10px; width: 50px;">
@@ -449,7 +452,10 @@ class ETFInputSection extends HTMLElement {
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
                     ${this.etfs.map((etf, index) => `
                         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
-                            <span style="color: var(--text-primary);"><strong>${etf.name}</strong> ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''} - ${etf.holdings.length} holdings</span>
+                            <div style="flex: 1;">
+                                <div style="color: var(--text-primary);"><strong>${etf.name}</strong> ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''} - ${etf.holdings.length} holdings</div>
+                                ${etf.displayName ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${etf.displayName}</div>` : ''}
+                            </div>
                             <button class="button-secondary button" style="padding: 4px 8px; font-size: 12px;" data-remove-index="${index}">Remove</button>
                         </div>
                     `).join('')}
@@ -500,6 +506,7 @@ class ETFInputSection extends HTMLElement {
 
     processETF() {
         const name = this.querySelector('#etf-name').value.trim();
+        const displayName = this.querySelector('#etf-display-name').value.trim();
         const totalValue = parseFloat(this.querySelector('#etf-total-value').value);
         const valueUnit = this.querySelector('#etf-value-unit').value;
         const myInvestment = parseFloat(this.querySelector('#my-investment').value);
@@ -542,6 +549,7 @@ class ETFInputSection extends HTMLElement {
         
         this.etfs.push({ 
             name, 
+            displayName: displayName || null,
             holdings, 
             totalValue: totalValueInUSD,
             displayValue: totalValue ? `$${totalValue}${valueUnit}` : null,
@@ -550,6 +558,7 @@ class ETFInputSection extends HTMLElement {
         this.saveETFs();
         
         this.querySelector('#etf-name').value = '';
+        this.querySelector('#etf-display-name').value = '';
         this.querySelector('#etf-total-value').value = '';
         this.querySelector('#my-investment').value = '';
         this.querySelector('#holdings-data').value = '';
@@ -800,7 +809,10 @@ class ETFComparisonView extends HTMLElement {
                     return `
                         <div class="etf-column">
                             <div class="etf-header">
-                                <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0;">${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                                    ${etf.displayName ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${etf.displayName}</div>` : ''}
+                                </div>
                                 ${showCopyButton ? `<button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>` : ''}
                             </div>
                             <div class="etf-sort-controls" style="position: relative; margin: 4px 0; height: 20px;">
@@ -835,14 +847,16 @@ class ETFComparisonView extends HTMLElement {
                                 return `
                                     <div class="holding-item ${isOverlap ? 'overlap' : ''}">
                                         <div class="holding-header">
-                                            <span class="ticker">${holding.ticker}</span>
-                                            <div style="text-align: right;">
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div class="ticker">${holding.ticker}</div>
+                                                ${holding.description ? `<div class="description">${holding.description}</div>` : ''}
+                                            </div>
+                                            <div style="text-align: right; white-space: nowrap; margin-left: 8px;">
                                                 <div class="amount">${holding.amount.toFixed(2)}%</div>
                                                 ${usdDisplay ? `<div class="usd-value">${usdDisplay}</div>` : ''}
                                                 ${myPositionDisplay ? `<div class="my-investment-value">My: ${myPositionDisplay}</div>` : ''}
                                             </div>
                                         </div>
-                                        ${holding.description ? `<div class="description">${holding.description}</div>` : ''}
                                     </div>
                                 `;
                             }).join('')}
