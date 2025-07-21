@@ -166,7 +166,7 @@ h1 {
     margin: 0 2px;
 }
 
-.etf-column:hover .reorder-btn {
+.etf-header:hover .reorder-btn {
     opacity: 0.6;
 }
 
@@ -184,7 +184,12 @@ h1 {
     padding: 4px 6px;
     margin: 0 2px;
     border-radius: 3px;
+    opacity: 0;
     transition: all 0.2s ease;
+}
+
+.etf-header:hover .collapse-btn {
+    opacity: 1;
 }
 
 .collapse-btn:hover {
@@ -214,8 +219,13 @@ h1 {
     padding: 6px 8px;
     cursor: pointer;
     font-size: 14px;
+    opacity: 0;
     transition: all 0.2s ease;
     color: var(--text-secondary);
+}
+
+.etf-header:hover .copy-etf-btn {
+    opacity: 1;
 }
 
 .copy-etf-btn:hover {
