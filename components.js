@@ -556,6 +556,7 @@ class ETFComparisonView extends HTMLElement {
         super();
         this.tabId = null;
         this.etfs = [];
+        this.etfSortState = {}; // Track sort state per ETF: {etfIndex: 'ticker'|'weight'}
     }
 
     connectedCallback() {
@@ -596,6 +597,7 @@ class ETFComparisonView extends HTMLElement {
         `;
         
         this.setupCopyButtons();
+        this.setupETFSortControls();
     }
 
     calculateOverlaps() {
@@ -723,6 +725,17 @@ class ETFComparisonView extends HTMLElement {
         document.body.appendChild(modal);
     }
 
+    setupETFSortControls() {
+        this.querySelectorAll('.sort-arrow').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                const sortType = e.target.getAttribute('data-sort');
+                this.etfSortState[etfIndex] = sortType;
+                this.render();
+            });
+        });
+    }
+
     renderOverlapStats(overlaps) {
         if (this.etfs.length < 2) return '';
 
@@ -750,26 +763,43 @@ class ETFComparisonView extends HTMLElement {
     renderHoldingsComparison(overlaps) {
         if (this.etfs.length === 0) return '';
 
-        const allTickers = new Set();
-        this.etfs.forEach(etf => {
-            etf.holdings.forEach(holding => allTickers.add(holding.ticker));
-        });
-
-        const sortedTickers = Array.from(allTickers).sort();
-
         return `
             <div class="holdings-grid">
-                ${this.etfs.map((etf, etfIndex) => `
-                    <div class="etf-column">
-                        <div class="etf-header">
-                            <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
-                            <button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>
-                        </div>
-                        ${sortedTickers.map(ticker => {
-                            const holding = etf.holdings.find(h => h.ticker === ticker);
-                            const isOverlap = overlaps.tickerToETFs && overlaps.tickerToETFs[ticker] && overlaps.tickerToETFs[ticker].length > 1;
-                            
-                            if (holding) {
+                ${this.etfs.map((etf, etfIndex) => {
+                    // Initialize sort state for this ETF if not set
+                    if (!this.etfSortState.hasOwnProperty(etfIndex)) {
+                        this.etfSortState[etfIndex] = 'ticker';
+                    }
+                    
+                    // Sort this ETF's holdings based on its individual sort state
+                    let sortedHoldings;
+                    if (this.etfSortState[etfIndex] === 'weight') {
+                        sortedHoldings = [...etf.holdings].sort((a, b) => b.amount - a.amount);
+                    } else {
+                        sortedHoldings = [...etf.holdings].sort((a, b) => a.ticker.localeCompare(b.ticker));
+                    }
+
+                    return `
+                        <div class="etf-column">
+                            <div class="etf-header">
+                                <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                                <button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>
+                            </div>
+                            <div class="etf-sort-controls" style="position: relative; margin: 4px 0; height: 20px;">
+                                <button class="sort-arrow sort-ticker" data-etf-index="${etfIndex}" data-sort="ticker" 
+                                        style="position: absolute; left: 0; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 2px; ${this.etfSortState[etfIndex] === 'ticker' ? 'opacity: 1;' : 'opacity: 0.3;'}" 
+                                        title="Sort alphabetically by ticker">
+                                    ↑A-Z
+                                </button>
+                                <button class="sort-arrow sort-weight" data-etf-index="${etfIndex}" data-sort="weight" 
+                                        style="position: absolute; right: 0; background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 2px; ${this.etfSortState[etfIndex] === 'weight' ? 'opacity: 1;' : 'opacity: 0.3;'}" 
+                                        title="Sort by weight (high to low)">
+                                    ↓%
+                                </button>
+                            </div>
+                            ${sortedHoldings.map(holding => {
+                                const isOverlap = overlaps.tickerToETFs && overlaps.tickerToETFs[holding.ticker] && overlaps.tickerToETFs[holding.ticker].length > 1;
+                                
                                 const usdValue = etf.totalValue ? (etf.totalValue * holding.amount / 100) : null;
                                 const usdDisplay = usdValue ? 
                                     (usdValue >= 1000000000 ? `$${(usdValue/1000000000).toFixed(1)}B` :
@@ -787,7 +817,7 @@ class ETFComparisonView extends HTMLElement {
                                 return `
                                     <div class="holding-item ${isOverlap ? 'overlap' : ''}">
                                         <div class="holding-header">
-                                            <span class="ticker">${ticker}</span>
+                                            <span class="ticker">${holding.ticker}</span>
                                             <div style="text-align: right;">
                                                 <div class="amount">${holding.amount.toFixed(2)}%</div>
                                                 ${usdDisplay ? `<div class="usd-value">${usdDisplay}</div>` : ''}
@@ -797,20 +827,10 @@ class ETFComparisonView extends HTMLElement {
                                         ${holding.description ? `<div class="description">${holding.description}</div>` : ''}
                                     </div>
                                 `;
-                            } else if (isOverlap) {
-                                return `
-                                    <div class="holding-item" style="opacity: 0.3;">
-                                        <div class="holding-header">
-                                            <span class="ticker">${ticker}</span>
-                                            <span class="amount">—</span>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                            return '';
-                        }).join('')}
-                    </div>
-                `).join('')}
+                            }).join('')}
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
     }
