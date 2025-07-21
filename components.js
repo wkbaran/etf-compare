@@ -777,6 +777,10 @@ class ETFComparisonView extends HTMLElement {
     renderHoldingsComparison(overlaps) {
         if (this.etfs.length === 0) return '';
 
+        // Check if there are multiple tabs to determine if copy button should be shown
+        const tabsManager = document.querySelector('etf-tabs-manager');
+        const showCopyButton = tabsManager && tabsManager.tabs.length > 1;
+
         return `
             <div class="holdings-grid">
                 ${this.etfs.map((etf, etfIndex) => {
@@ -797,7 +801,7 @@ class ETFComparisonView extends HTMLElement {
                         <div class="etf-column">
                             <div class="etf-header">
                                 <h3>${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
-                                <button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>
+                                ${showCopyButton ? `<button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>` : ''}
                             </div>
                             <div class="etf-sort-controls" style="position: relative; margin: 4px 0; height: 20px;">
                                 <button class="sort-arrow sort-ticker" data-etf-index="${etfIndex}" data-sort="ticker" 
