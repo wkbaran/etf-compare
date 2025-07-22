@@ -466,6 +466,21 @@ class ETFInputSection extends HTMLElement {
                 this.removeETF(index);
             });
         });
+
+        // Setup editing for input section
+        this.querySelectorAll('.etf-total-value-edit-small').forEach(element => {
+            element.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                this.startTotalValueEditSmall(etfIndex, e.target);
+            });
+        });
+
+        this.querySelectorAll('.my-investment-edit-small').forEach(element => {
+            element.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                this.startInvestmentEditSmall(etfIndex, e.target);
+            });
+        });
     }
 
     renderExistingETFs() {
@@ -478,7 +493,7 @@ class ETFInputSection extends HTMLElement {
                     ${this.etfs.map((etf, index) => `
                         <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
                             <div style="flex: 1;">
-                                <div style="color: var(--text-primary);"><strong>${etf.name}</strong> ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''} - ${etf.holdings.length} holdings</div>
+                                <div style="color: var(--text-primary);"><strong>${etf.name}</strong> <span class="etf-total-value-edit-small" data-etf-index="${index}" style="cursor: pointer;" title="Click to edit total value">${etf.displayValue || '(No total set)'}</span> <span class="my-investment-edit-small" data-etf-index="${index}" style="cursor: pointer; color: var(--accent-color);" title="Click to edit investment amount">${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : '- My: (Not set)'}</span> - ${etf.holdings.length} holdings</div>
                                 ${etf.displayName ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${etf.displayName}</div>` : ''}
                             </div>
                             <button class="button-secondary button" style="padding: 4px 8px; font-size: 12px;" data-remove-index="${index}">Remove</button>
@@ -592,6 +607,141 @@ class ETFInputSection extends HTMLElement {
         this.render();
     }
 
+    startTotalValueEditSmall(etfIndex, element) {
+        const etf = this.etfs[etfIndex];
+        const currentValue = etf.totalValue;
+        
+        // Parse current value to show in input
+        let inputValue = '';
+        let selectedUnit = 'B';
+        
+        if (currentValue) {
+            if (currentValue >= 1000000000) {
+                inputValue = (currentValue / 1000000000).toString();
+                selectedUnit = 'B';
+            } else {
+                inputValue = (currentValue / 1000000).toString();
+                selectedUnit = 'M';
+            }
+        }
+
+        // Create input elements
+        const inputContainer = document.createElement('span');
+        inputContainer.style.cssText = 'display: inline-flex; align-items: center; gap: 2px;';
+        
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = inputValue;
+        input.step = '0.1';
+        input.min = '0';
+        input.style.cssText = 'width: 50px; padding: 1px 2px; border: 1px solid var(--accent-color); border-radius: 2px; font-size: 12px;';
+        
+        const select = document.createElement('select');
+        select.innerHTML = '<option value="M">M</option><option value="B">B</option>';
+        select.value = selectedUnit;
+        select.style.cssText = 'padding: 1px; border: 1px solid var(--accent-color); border-radius: 2px; font-size: 12px;';
+        
+        inputContainer.appendChild(input);
+        inputContainer.appendChild(select);
+        
+        // Replace element with input
+        element.parentNode.replaceChild(inputContainer, element);
+        input.focus();
+        input.select();
+        
+        const finishEdit = () => {
+            const newValue = parseFloat(input.value);
+            const unit = select.value;
+            
+            if (!isNaN(newValue) && newValue > 0) {
+                const totalValueInUSD = newValue * (unit === 'B' ? 1000000000 : 1000000);
+                etf.totalValue = totalValueInUSD;
+                etf.displayValue = `$${newValue}${unit}`;
+            } else {
+                etf.totalValue = null;
+                etf.displayValue = null;
+            }
+            
+            this.saveETFs();
+            this.render();
+        };
+        
+        const cancelEdit = () => {
+            this.render();
+        };
+        
+        let isInteracting = false;
+        
+        input.addEventListener('blur', () => {
+            // Delay to allow dropdown interaction
+            setTimeout(() => {
+                if (!isInteracting) finishEdit();
+            }, 150);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') finishEdit();
+            if (e.key === 'Escape') cancelEdit();
+        });
+        
+        select.addEventListener('mousedown', () => {
+            isInteracting = true;
+        });
+        
+        select.addEventListener('blur', () => {
+            setTimeout(() => {
+                isInteracting = false;
+                finishEdit();
+            }, 100);
+        });
+        
+        select.addEventListener('change', () => {
+            isInteracting = false;
+        });
+        // Don't auto-finish on dropdown change, let user choose
+    }
+
+    startInvestmentEditSmall(etfIndex, element) {
+        const etf = this.etfs[etfIndex];
+        const currentValue = etf.myInvestment || 0;
+        
+        // Create input element
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = currentValue.toString();
+        input.step = '0.01';
+        input.min = '0';
+        input.style.cssText = 'width: 60px; padding: 1px 2px; border: 1px solid var(--accent-color); border-radius: 2px; font-size: 12px;';
+        
+        // Replace element with input
+        element.parentNode.replaceChild(input, element);
+        input.focus();
+        input.select();
+        
+        const finishEdit = () => {
+            const newValue = parseFloat(input.value);
+            etf.myInvestment = !isNaN(newValue) && newValue >= 0 ? newValue : 0;
+            this.saveETFs();
+            this.render();
+        };
+        
+        const cancelEdit = () => {
+            this.render();
+        };
+        
+        let isInteracting = false;
+        
+        input.addEventListener('blur', () => {
+            // Delay to allow dropdown interaction
+            setTimeout(() => {
+                if (!isInteracting) finishEdit();
+            }, 150);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') finishEdit();
+            if (e.key === 'Escape') cancelEdit();
+        });
+    }
+
     removeETF(index) {
         this.etfs.splice(index, 1);
         this.saveETFs();
@@ -664,6 +814,7 @@ class ETFComparisonView extends HTMLElement {
         this.setupReorderButtons();
         this.setupCollapseButtons();
         this.setupRemoveButtons();
+        this.setupValueEditing();
     }
 
     isValidTickerForOverlap(ticker) {
@@ -885,6 +1036,166 @@ class ETFComparisonView extends HTMLElement {
         }));
     }
 
+    setupValueEditing() {
+        // Setup total value editing
+        this.querySelectorAll('.etf-total-value-edit').forEach(element => {
+            element.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                this.startTotalValueEdit(etfIndex, e.target);
+            });
+        });
+
+        // Setup investment amount editing
+        this.querySelectorAll('.my-investment-edit').forEach(element => {
+            element.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                this.startInvestmentEdit(etfIndex, e.target);
+            });
+        });
+    }
+
+    startTotalValueEdit(etfIndex, element) {
+        const etf = this.etfs[etfIndex];
+        const currentValue = etf.totalValue;
+        
+        // Parse current value to show in input
+        let inputValue = '';
+        let selectedUnit = 'B';
+        
+        if (currentValue) {
+            if (currentValue >= 1000000000) {
+                inputValue = (currentValue / 1000000000).toString();
+                selectedUnit = 'B';
+            } else {
+                inputValue = (currentValue / 1000000).toString();
+                selectedUnit = 'M';
+            }
+        }
+
+        // Create input elements
+        const inputContainer = document.createElement('div');
+        inputContainer.style.cssText = 'display: flex; align-items: center; gap: 4px;';
+        
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = inputValue;
+        input.step = '0.1';
+        input.min = '0';
+        input.style.cssText = 'width: 60px; padding: 2px 4px; border: 1px solid var(--accent-color); border-radius: 2px; font-size: 14px;';
+        
+        const select = document.createElement('select');
+        select.innerHTML = '<option value="M">M</option><option value="B">B</option>';
+        select.value = selectedUnit;
+        select.style.cssText = 'padding: 2px; border: 1px solid var(--accent-color); border-radius: 2px; font-size: 14px;';
+        
+        inputContainer.appendChild(input);
+        inputContainer.appendChild(select);
+        
+        // Replace element with input
+        element.parentNode.replaceChild(inputContainer, element);
+        input.focus();
+        input.select();
+        
+        const finishEdit = () => {
+            const newValue = parseFloat(input.value);
+            const unit = select.value;
+            
+            if (!isNaN(newValue) && newValue > 0) {
+                const totalValueInUSD = newValue * (unit === 'B' ? 1000000000 : 1000000);
+                etf.totalValue = totalValueInUSD;
+                etf.displayValue = `$${newValue}${unit}`;
+            } else {
+                etf.totalValue = null;
+                etf.displayValue = null;
+            }
+            
+            this.saveETFChanges();
+            this.render();
+        };
+        
+        const cancelEdit = () => {
+            this.render();
+        };
+        
+        let isInteracting = false;
+        
+        input.addEventListener('blur', () => {
+            // Delay to allow dropdown interaction
+            setTimeout(() => {
+                if (!isInteracting) finishEdit();
+            }, 150);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') finishEdit();
+            if (e.key === 'Escape') cancelEdit();
+        });
+        
+        select.addEventListener('mousedown', () => {
+            isInteracting = true;
+        });
+        
+        select.addEventListener('blur', () => {
+            setTimeout(() => {
+                isInteracting = false;
+                finishEdit();
+            }, 100);
+        });
+        
+        select.addEventListener('change', () => {
+            isInteracting = false;
+        });
+        // Don't auto-finish on dropdown change, let user choose
+    }
+
+    startInvestmentEdit(etfIndex, element) {
+        const etf = this.etfs[etfIndex];
+        const currentValue = etf.myInvestment || 0;
+        
+        // Create input element
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = currentValue.toString();
+        input.step = '0.01';
+        input.min = '0';
+        input.style.cssText = 'width: 80px; padding: 2px 4px; border: 1px solid var(--accent-color); border-radius: 2px; font-size: 14px;';
+        
+        // Replace element with input
+        element.parentNode.replaceChild(input, element);
+        input.focus();
+        input.select();
+        
+        const finishEdit = () => {
+            const newValue = parseFloat(input.value);
+            etf.myInvestment = !isNaN(newValue) && newValue >= 0 ? newValue : 0;
+            this.saveETFChanges();
+            this.render();
+        };
+        
+        const cancelEdit = () => {
+            this.render();
+        };
+        
+        let isInteracting = false;
+        
+        input.addEventListener('blur', () => {
+            // Delay to allow dropdown interaction
+            setTimeout(() => {
+                if (!isInteracting) finishEdit();
+            }, 150);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') finishEdit();
+            if (e.key === 'Escape') cancelEdit();
+        });
+    }
+
+    saveETFChanges() {
+        const tabsManager = document.querySelector('etf-tabs-manager');
+        if (tabsManager && this.tabId) {
+            tabsManager.updateTabETFs(this.tabId, this.etfs);
+        }
+    }
+
     renderOverlapStats(overlaps) {
         if (this.etfs.length < 2) return '';
 
@@ -944,7 +1255,11 @@ class ETFComparisonView extends HTMLElement {
                             <div class="etf-header">
                                 ${etfIndex > 0 ? `<button class="reorder-btn reorder-left" data-etf-index="${etfIndex}" data-direction="left" title="Move left">◀</button>` : ''}
                                 <div style="flex: 1;">
-                                    <h3 style="margin: 0;">${etf.name} ${etf.displayValue ? `(${etf.displayValue})` : ''} ${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : ''}</h3>
+                                    <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        <span>${etf.name}</span>
+                                        <span class="etf-total-value-edit" data-etf-index="${etfIndex}" style="cursor: pointer; color: var(--text-secondary); font-size: 14px;" title="Click to edit total value">${etf.displayValue || '(No total set)'}</span>
+                                        ${etf.myInvestment ? `<span class="my-investment-edit" data-etf-index="${etfIndex}" style="cursor: pointer; color: var(--accent-color); font-size: 14px;" title="Click to edit investment amount">- My: $${etf.myInvestment.toLocaleString()}</span>` : `<span class="my-investment-edit" data-etf-index="${etfIndex}" style="cursor: pointer; color: var(--text-secondary); font-size: 14px;" title="Click to add investment amount">- My: (Not set)</span>`}
+                                    </h3>
                                     ${etf.displayName ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${etf.displayName}</div>` : ''}
                                 </div>
                                 <button class="collapse-btn" data-etf-key="${etfKey}" title="${this.etfCollapseState[etfKey] ? 'Expand holdings' : 'Collapse holdings'}">${this.etfCollapseState[etfKey] ? '▲' : '▼'}</button>
@@ -1006,3 +1321,5 @@ class ETFComparisonView extends HTMLElement {
         `;
     }
 }
+
+// Components are registered in utils.js
