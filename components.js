@@ -362,6 +362,7 @@ class ETFInputSection extends HTMLElement {
         super();
         this.tabId = null;
         this.etfs = [];
+        this.replacingIndex = -1; // Track which ETF we're replacing (-1 = not replacing)
     }
 
     connectedCallback() {
@@ -439,7 +440,7 @@ class ETFInputSection extends HTMLElement {
                     
                     <div>
                         <button class="button" id="process-btn">Process ETF</button>
-                        <button class="button-secondary button" onclick="this.parentElement.parentElement.style.display='none'">Cancel</button>
+                        <button class="button-secondary button" id="cancel-btn">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -451,6 +452,7 @@ class ETFInputSection extends HTMLElement {
     setupEventListeners() {
         const detectBtn = this.querySelector('#detect-btn');
         const processBtn = this.querySelector('#process-btn');
+        const cancelBtn = this.querySelector('#cancel-btn');
         
         if (detectBtn) {
             detectBtn.addEventListener('click', () => this.detectColumns());
@@ -460,12 +462,17 @@ class ETFInputSection extends HTMLElement {
             processBtn.addEventListener('click', () => this.processETF());
         }
         
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.cancelInput());
+        }
+        
         this.querySelectorAll('[data-remove-index]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const index = parseInt(e.target.getAttribute('data-remove-index'));
                 this.removeETF(index);
             });
         });
+
 
         // Setup editing for input section
         this.querySelectorAll('.etf-total-value-edit-small').forEach(element => {
@@ -483,26 +490,6 @@ class ETFInputSection extends HTMLElement {
         });
     }
 
-    renderExistingETFs() {
-        if (this.etfs.length === 0) return '';
-        
-        return `
-            <div style="margin-top: 20px;">
-                <h3>Loaded ETFs:</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                    ${this.etfs.map((etf, index) => `
-                        <div style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
-                            <div style="flex: 1;">
-                                <div style="color: var(--text-primary);"><strong>${etf.name}</strong> <span class="etf-total-value-edit-small" data-etf-index="${index}" style="cursor: pointer;" title="Click to edit total value">${etf.displayValue || '(No total set)'}</span> <span class="my-investment-edit-small" data-etf-index="${index}" style="cursor: pointer; color: var(--accent-color);" title="Click to edit investment amount">${etf.myInvestment ? `- My: $${etf.myInvestment.toLocaleString()}` : '- My: (Not set)'}</span> - ${etf.holdings.length} holdings</div>
-                                ${etf.displayName ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${etf.displayName}</div>` : ''}
-                            </div>
-                            <button class="button-secondary button" style="padding: 4px 8px; font-size: 12px;" data-remove-index="${index}">Remove</button>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
 
     detectColumns() {
         const data = this.querySelector('#holdings-data').value.trim();
@@ -587,14 +574,29 @@ class ETFInputSection extends HTMLElement {
 
         const totalValueInUSD = totalValue ? totalValue * (valueUnit === 'B' ? 1000000000 : 1000000) : null;
         
-        this.etfs.push({ 
-            name, 
-            displayName: displayName || null,
-            holdings, 
-            totalValue: totalValueInUSD,
-            displayValue: totalValue ? `$${totalValue}${valueUnit}` : null,
-            myInvestment: myInvestment || 0
-        });
+        if (this.replacingIndex >= 0) {
+            // Replace existing ETF holdings while preserving other data
+            const existingETF = this.etfs[this.replacingIndex];
+            this.etfs[this.replacingIndex] = {
+                name: name || existingETF.name,
+                displayName: displayName || existingETF.displayName,
+                holdings, // Replace with new holdings
+                totalValue: totalValueInUSD !== null ? totalValueInUSD : existingETF.totalValue,
+                displayValue: totalValue ? `$${totalValue}${valueUnit}` : existingETF.displayValue,
+                myInvestment: myInvestment !== null && !isNaN(myInvestment) ? myInvestment : existingETF.myInvestment
+            };
+            this.replacingIndex = -1; // Reset replacement mode
+        } else {
+            // Add new ETF
+            this.etfs.push({ 
+                name, 
+                displayName: displayName || null,
+                holdings, 
+                totalValue: totalValueInUSD,
+                displayValue: totalValue ? `$${totalValue}${valueUnit}` : null,
+                myInvestment: myInvestment || 0
+            });
+        }
         this.saveETFs();
         
         this.querySelector('#etf-name').value = '';
@@ -603,6 +605,13 @@ class ETFInputSection extends HTMLElement {
         this.querySelector('#my-investment').value = '';
         this.querySelector('#holdings-data').value = '';
         this.querySelector('.input-area').style.display = 'none';
+        
+        // Reset button text and replacement mode
+        const processBtn = this.querySelector('#process-btn');
+        if (processBtn) {
+            processBtn.textContent = 'Process ETF';
+        }
+        this.replacingIndex = -1;
         
         this.render();
     }
@@ -742,6 +751,67 @@ class ETFInputSection extends HTMLElement {
         });
     }
 
+    cancelInput() {
+        // Hide input area
+        this.querySelector('.input-area').style.display = 'none';
+        
+        // Reset button text and replacement mode
+        const processBtn = this.querySelector('#process-btn');
+        if (processBtn) {
+            processBtn.textContent = 'Process ETF';
+        }
+        this.replacingIndex = -1;
+        
+        // Clear form fields
+        this.querySelector('#holdings-data').value = '';
+        
+        // Only clear ETF metadata fields if we were in replacement mode
+        // (in replacement mode, we want to preserve the original ETF data)
+    }
+
+    startReplaceHoldings(index) {
+        const etf = this.etfs[index];
+        if (!etf) return;
+
+        // Set replacement mode
+        this.replacingIndex = index;
+
+        // Pre-populate the form with existing ETF data (but leave holdings empty for replacement)
+        this.querySelector('#etf-name').value = etf.name;
+        this.querySelector('#etf-display-name').value = etf.displayName || '';
+        
+        // Set total value fields
+        if (etf.totalValue) {
+            if (etf.totalValue >= 1000000000) {
+                this.querySelector('#etf-total-value').value = (etf.totalValue / 1000000000).toString();
+                this.querySelector('#etf-value-unit').value = 'B';
+            } else {
+                this.querySelector('#etf-total-value').value = (etf.totalValue / 1000000).toString();
+                this.querySelector('#etf-value-unit').value = 'M';
+            }
+        }
+        
+        this.querySelector('#my-investment').value = etf.myInvestment || '';
+
+        // Clear the holdings data area for new input
+        this.querySelector('#holdings-data').value = '';
+        
+        // Show the input area
+        this.querySelector('.input-area').style.display = 'block';
+        
+        // Update the button text to indicate replacement
+        const processBtn = this.querySelector('#process-btn');
+        if (processBtn) {
+            processBtn.textContent = 'Replace Holdings';
+        }
+        
+        // Focus on the holdings data area
+        this.querySelector('#holdings-data').focus();
+        
+        // Scroll to the input area
+        this.querySelector('.input-area').scrollIntoView({ behavior: 'smooth' });
+    }
+
     removeETF(index) {
         this.etfs.splice(index, 1);
         this.saveETFs();
@@ -815,6 +885,7 @@ class ETFComparisonView extends HTMLElement {
         this.setupCollapseButtons();
         this.setupRemoveButtons();
         this.setupValueEditing();
+        this.setupReplaceButtons();
     }
 
     isValidTickerForOverlap(ticker) {
@@ -1034,6 +1105,26 @@ class ETFComparisonView extends HTMLElement {
             detail: { tabId: this.tabId, etfs: this.etfs },
             bubbles: true 
         }));
+    }
+
+    setupReplaceButtons() {
+        this.querySelectorAll('.replace-holdings-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const etfIndex = parseInt(e.target.getAttribute('data-etf-index'));
+                this.startReplaceHoldings(etfIndex);
+            });
+        });
+    }
+
+    startReplaceHoldings(etfIndex) {
+        // Find the input section to trigger replacement mode
+        const inputSection = document.querySelector(`etf-input-section[data-tab-id="${this.tabId}"]`);
+        if (inputSection) {
+            inputSection.startReplaceHoldings(etfIndex);
+            
+            // Scroll to the input section
+            inputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     setupValueEditing() {
@@ -1263,6 +1354,7 @@ class ETFComparisonView extends HTMLElement {
                                     ${etf.displayName ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${etf.displayName}</div>` : ''}
                                 </div>
                                 <button class="collapse-btn" data-etf-key="${etfKey}" title="${this.etfCollapseState[etfKey] ? 'Expand holdings' : 'Collapse holdings'}">${this.etfCollapseState[etfKey] ? '▲' : '▼'}</button>
+                                <button class="replace-holdings-btn" data-etf-index="${etfIndex}" title="Replace holdings data">📝</button>
                                 <button class="remove-etf-btn" data-etf-index="${etfIndex}" title="Remove ETF">🗑️</button>
                                 ${showCopyButton ? `<button class="copy-etf-btn" data-etf-index="${etfIndex}" title="Copy ETF to another tab">📋</button>` : ''}
                                 ${etfIndex < this.etfs.length - 1 ? `<button class="reorder-btn reorder-right" data-etf-index="${etfIndex}" data-direction="right" title="Move right">▶</button>` : ''}

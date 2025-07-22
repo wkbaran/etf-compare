@@ -33,6 +33,40 @@ open index.html
 # Follow existing code style patterns in components.js and utils.js
 ```
 
+## Commit Message Guidelines
+
+### Focus on End Results
+- Write commit messages that describe what users get, not the development process
+- Don't mention failed attempts, rework, or intermediate steps
+- Focus on the final delivered functionality
+
+### Avoid Implementation Details
+- Don't describe styling details that are obvious or consistent with existing patterns
+- Don't mention hover behavior, dark mode support, or other UI consistency features
+- Assume reviewers understand standard implementation practices
+
+### Be Specific About Features
+- Clearly state the actual capabilities being added
+- Reference the GitHub issue being resolved
+- Keep descriptions focused on user-facing functionality
+
+### Example Structure
+```
+Brief title describing the main feature
+
+- Bullet point of key capability 1
+- Bullet point of key capability 2
+- Documentation updates if applicable
+
+Resolves #XX
+```
+
+### What to Avoid
+- "Add proper styling" (assumed)
+- "Implement hover behavior" (implementation detail)
+- "Remove redundant code" (development process)
+- Multiple issue resolution in one commit (unless truly related)
+
 ## Architecture & Technology Stack
 
 ### Core Technologies

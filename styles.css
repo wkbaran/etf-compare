@@ -263,6 +263,35 @@ h1 {
     border-color: #991b1b;
 }
 
+.replace-holdings-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.etf-header:hover .replace-holdings-btn {
+    opacity: 1;
+}
+
+.replace-holdings-btn:hover {
+    background: #e0f2fe;
+    color: #0277bd;
+    border-color: #81d4fa;
+    transform: scale(1.05);
+}
+
+[data-theme="dark"] .replace-holdings-btn:hover {
+    background: #0c4a6e;
+    color: #7dd3fc;
+    border-color: #0369a1;
+}
+
 .copy-modal-content {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }

@@ -11,6 +11,8 @@ A lightweight, browser-based application for comparing and analyzing ETF holding
 - **Smart Column Detection**: Automatically identifies ticker symbols, percentages, and descriptions
 - **Multiple Data Formats**: Works with tab-separated, space-separated, or other delimited data
 - **Data Validation**: Ensures clean data processing with error handling
+- **Inline Editing**: Click to edit investment amounts and ETF total values directly
+- **Holdings Replacement**: Update ETF holdings data while preserving metadata
 
 ### Financial Analysis
 - **Personal Portfolio Tracking**: Enter your personal investment amount per ETF
@@ -61,6 +63,11 @@ A lightweight, browser-based application for comparing and analyzing ETF holding
    - Add multiple ETFs to see side-by-side comparison
    - Overlapping holdings are highlighted in yellow
    - View overlap statistics at the top
+
+5. **Edit & Update**
+   - Click on any investment amount or total value to edit inline
+   - Use the 📝 button (appears on hover) to replace ETF holdings data
+   - Original ETF metadata is preserved during holdings replacement
 
 ## Data Format Examples
 
@@ -137,3 +144,4 @@ See exactly how your money is allocated:
 - **v1.3**: Added personal investment tracking
 - **v1.4**: Modular file structure and improved maintainability
 - **v1.5**: Enhanced UI with per-ETF sorting, collapsible holdings, ETF reordering, tab close confirmation, and streamlined ETF management
+- **v1.6**: Added inline editing for investment amounts and ETF values, plus holdings replacement functionality
