@@ -1,0 +1,19 @@
+{
+  "name": "etf-compare",
+  "version": "1.0.0",
+  "description": "Browser-based ETF holdings comparison tool",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "install-browsers": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "keywords": ["etf", "finance", "comparison", "vanilla-js"],
+  "author": "",
+  "license": "MIT"
+}
