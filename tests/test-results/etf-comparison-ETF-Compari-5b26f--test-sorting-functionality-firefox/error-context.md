@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- heading "ETF Holdings Comparison Tool 📄 📁 🗑️ 🌙 Dark Mode" [level=1]:
+  - text: ETF Holdings Comparison Tool
+  - button "📄"
+  - button "📁"
+  - text: 📁
+  - button "🗑️"
+  - button "🌙 Dark Mode"
+- text: Comparison 1 +
+- heading "Add ETF Holdings" [level=2]
+- textbox "ETF Ticker (e.g., CIBR, UFO)": CIBR
+- textbox "Display Name (optional)"
+- spinbutton: "2.5"
+- combobox:
+  - option "M"
+  - option "B" [selected]
+- spinbutton: "5000"
+- button "Add New ETF"
+- text: "Paste ETF holdings data:"
+- textbox "Paste your ETF holdings data here...": Ticker Weight Name AAPL 5.2 Apple Inc MSFT 4.8 Microsoft Corporation GOOGL 3.1 Alphabet Inc Class A AMZN 2.9 Amazon.com Inc TSLA 2.5 Tesla Inc NVDA 2.3 NVIDIA Corporation META 2.1 Meta Platforms Inc
+- text: "Column mapping:"
+- combobox:
+  - option "Select ticker column"
+  - option "Ticker" [selected]
+  - option "Weight"
+  - option "Name"
+- combobox:
+  - option "Select amount column"
+  - option "Ticker"
+  - option "Weight" [selected]
+  - option "Name"
+- combobox:
+  - option "Select description column (optional)"
+  - option "Ticker"
+  - option "Weight"
+  - option "Name" [selected]
+- button "Detect Columns"
+- button "Process ETF"
+- button "Cancel"
+```

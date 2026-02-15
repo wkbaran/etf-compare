@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
 // Test data constants
-const CIBR_DATA = `AAPL	5.2	Apple Inc
+const CIBR_DATA = `Ticker	Weight	Name
+AAPL	5.2	Apple Inc
 MSFT	4.8	Microsoft Corporation
 GOOGL	3.1	Alphabet Inc Class A
 AMZN	2.9	Amazon.com Inc
@@ -9,7 +10,8 @@ TSLA	2.5	Tesla Inc
 NVDA	2.3	NVIDIA Corporation
 META	2.1	Meta Platforms Inc`;
 
-const VTI_DATA = `AAPL	8.1	Apple Inc
+const VTI_DATA = `Ticker	Weight	Name
+AAPL	8.1	Apple Inc
 MSFT	7.3	Microsoft Corporation
 AMZN	3.2	Amazon.com Inc
 GOOGL	2.8	Alphabet Inc Class A
@@ -73,9 +75,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Detect Columns' }).click();
     
     // Set column mappings
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['5.2']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     
     // Process ETF
     await page.getByRole('button', { name: 'Process ETF' }).click();
@@ -99,9 +101,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Add New ETF' }).click();
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill(CIBR_DATA);
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['5.2']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Now create second ETF (VTI)
@@ -112,9 +114,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Add New ETF' }).click();
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill(VTI_DATA);
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['8.1']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Verify overlap analysis appears
@@ -138,9 +140,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Add New ETF' }).click();
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill(CIBR_DATA);
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['5.2']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Test alphabetical sorting
@@ -168,9 +170,9 @@ test.describe('ETF Comparison Tool', () => {
     // Add simple test holding: 10% allocation
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill('AAPL\t10.0\tApple Inc');
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['10.0']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Verify calculations
@@ -207,9 +209,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Add New ETF' }).click();
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill('AAPL\t10.0\tApple Inc');
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['10.0']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Verify ETF was created
@@ -231,9 +233,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Add New ETF' }).click();
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill('AAPL\t10.0\tApple Inc');
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['10.0']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Check if tab functionality exists
@@ -258,9 +260,9 @@ test.describe('ETF Comparison Tool', () => {
     await page.getByRole('button', { name: 'Add New ETF' }).click();
     await page.getByRole('textbox', { name: 'Paste your ETF holdings data' }).fill('AAPL\t10.0\tApple Inc');
     await page.getByRole('button', { name: 'Detect Columns' }).click();
-    await page.locator('#ticker-column').selectOption(['AAPL']);
-    await page.locator('#amount-column').selectOption(['10.0']);
-    await page.locator('#description-column').selectOption(['Apple Inc']);
+    await page.locator('#ticker-column').selectOption(['Ticker']);
+    await page.locator('#amount-column').selectOption(['Weight']);
+    await page.locator('#description-column').selectOption(['Name']);
     await page.getByRole('button', { name: 'Process ETF' }).click();
     
     // Verify ETF exists

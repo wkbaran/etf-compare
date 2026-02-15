@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- heading "ETF Holdings Comparison Tool 📄 📁 🗑️ 🌙 Dark Mode" [level=1]:
+  - text: ETF Holdings Comparison Tool
+  - button "📄"
+  - button "📁"
+  - text: 📁
+  - button "🗑️"
+  - button "🌙 Dark Mode"
+- text: Comparison 1 +
+- heading "Add ETF Holdings" [level=2]
+- textbox "ETF Ticker (e.g., CIBR, UFO)": PERSIST
+- textbox "Display Name (optional)"
+- spinbutton: "1"
+- combobox:
+  - option "M"
+  - option "B" [selected]
+- spinbutton: "1000"
+- button "Add New ETF"
+- text: "Paste ETF holdings data:"
+- textbox "Paste your ETF holdings data here...": AAPL 10.0 Apple Inc
+- text: "Column mapping:"
+- combobox:
+  - option "Select ticker column"
+  - option "AAPL" [selected]
+  - option "10.0"
+  - option "Apple Inc"
+- combobox:
+  - option "Select amount column"
+  - option "AAPL"
+  - option "10.0" [selected]
+  - option "Apple Inc"
+- combobox:
+  - option "Select description column (optional)"
+  - option "AAPL"
+  - option "10.0"
+  - option "Apple Inc" [selected]
+- button "Detect Columns"
+- button "Process ETF"
+- button "Cancel"
+```
